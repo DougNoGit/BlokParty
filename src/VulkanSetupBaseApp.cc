@@ -227,7 +227,8 @@ void VulkanSetupBaseApp::initVkDevices(){
     }
     VkPhysicalDeviceProperties props;
     vkGetPhysicalDeviceProperties(selectedDevice, &props);
-    std::cout << "Selected physical device '" << props.deviceName << "'(" << std::hex << props.deviceID << ")" << std::endl;
+    std::cout << "Selected physical device '" << props.deviceName << "'(" << std::hex << props.deviceID << ")" << std::dec << std::endl;
+    
 
     // Wrap physical device with utility class. 
     mPhysDevice = VulkanPhysicalDevice(selectedDevice); 
@@ -264,7 +265,8 @@ void VulkanSetupBaseApp::initSwapchain(){
     }else{
         mSwapchainBundle.presentation_mode = selectPresentationMode(chainInfo.presentation_modes);
     }
-    mSwapchainBundle.extent = selectSwapChainExtent(chainInfo.capabilities);
+    mViewportExtent = selectSwapChainExtent(chainInfo.capabilities);
+    mSwapchainBundle.extent = mViewportExtent;
 
     if(chainInfo.capabilities.maxImageCount == 0){
         mSwapchainBundle.requested_image_count = chainInfo.capabilities.minImageCount + 1;
@@ -364,7 +366,7 @@ const VkPresentModeKHR VulkanSetupBaseApp::selectPresentationMode(const std::vec
 }
 
 const VkExtent2D VulkanSetupBaseApp::selectSwapChainExtent(const VkSurfaceCapabilitiesKHR& aCapabilities) const{
-    if(aCapabilities.currentExtent.width  != 0xFFFFFFFF){
+    if(aCapabilities.currentExtent.width != 0xFFFFFFFF){
         return(aCapabilities.currentExtent);
     }else{
         VkExtent2D resultExtent;
