@@ -62,7 +62,7 @@ if(GLFW_DIR)
     
     message(STATUS "Set GLFW_LIBRARIES: ${GLFW_LIBRARIES}")
 
-  elseif(NOT EXISTS "${GLFW_DIR}/CMakeLists.txt" AND APPLE)
+  elseif(NOT EXISTS "${GLFW_DIR}/CMakeLists.txt")
     message("GLFW_DIR exists but contains no CMakeLists.txt, trying to add static library")
     include_directories(${GLFW_DIR})
     set(GLFW_LIBRARIES glfw)
@@ -210,5 +210,3 @@ else()
   set(SHADER_DIR "${SHADER_BINARY_DIR}")
 endif()
 add_definitions("-DASSET_DIR=${ASSET_DIR}" "-DSHADER_DIR=${SHADER_DIR}")
-
-add_subdirectory("${PROJECT_SOURCE_DIR}/tests")
