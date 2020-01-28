@@ -7,11 +7,10 @@
 #include <memory> // Include shared_ptr
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/transform.hpp>
-
-struct SimpleVertex {
-    glm::vec3 pos;
-    glm::vec4 color;
-};
+#define TINYGLTF_IMPLEMENTATION
+#define STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "utils/ModelContainer.h"
 
 using SimpleVertexBuffer = VertexAttributeBuffer<SimpleVertex>;
 using SimpleVertexInput = VertexInputTemplate<SimpleVertex>;
