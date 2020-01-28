@@ -16,8 +16,9 @@ using SimpleVertexBuffer = VertexAttributeBuffer<SimpleVertex>;
 using SimpleVertexInput = VertexInputTemplate<SimpleVertex>;
 
 struct Transforms {
+    alignas(16) glm::mat4 View;    
     alignas(16) glm::mat4 Model;
-    alignas(16) glm::mat4 Perspective;
+    alignas(16) glm::mat4 Projection;
 };
 
 struct AnimationInfo {
@@ -30,6 +31,7 @@ using UniformAnimationData = UniformStructData<AnimationInfo>;
 using UniformAnimationDataPtr = std::shared_ptr<UniformAnimationData>;
 
 static glm::mat4 getOrthographicProjection(const VkExtent2D& frameDim);
+static glm::mat4 getPerspective(const VkExtent2D& frameDim, float fov, float near, float far);
 
 class Application : public VulkanGraphicsApp
 {
@@ -138,20 +140,22 @@ void Application::cleanup(){
 void Application::render(){
 
     // Set the position of the top vertex 
-    if(glfwGetMouseButton(mWindow, GLFW_MOUSE_BUTTON_1) == GLFW_PRESS) {
-        glm::vec2 mousePos = getMousePos();
-        mGeometry->getVertices()[1].pos = glm::vec3(mousePos, 0.0);
-        mGeometry->updateDevice();
-        VulkanGraphicsApp::setVertexBuffer(mGeometry->getBuffer(), mGeometry->vertexCount());
-    }
+    //if(glfwGetMouseButton(mWindow, GLFW_MOUSE_BUTTON_1) == GLFW_PRESS) {
+    //    glm::vec2 mousePos = getMousePos();
+    //    mGeometry->getVertices()[1].pos = glm::vec3(mousePos, 0.0);
+    //    mGeometry->updateDevice();
+    //    VulkanGraphicsApp::setVertexBuffer(mGeometry->getBuffer(), mGeometry->vertexCount());
+    //}
 
     float time = static_cast<float>(glfwGetTime());
     VkExtent2D frameDimensions = getFramebufferSize();
-
+    static float angle = 0;
+    angle+=0.01;
     // Set the value of our uniform variable
     mTransformUniforms->pushUniformData({
-        glm::translate(glm::vec3(.1*cos(time), .1*sin(time), 0.0)),
-        getOrthographicProjection(frameDimensions)
+        glm::mat4(1),
+        glm::translate(glm::vec3(.1*cos(time), .1*sin(time), -5)) * glm::rotate(angle, glm::vec3(0,1,0)),
+        getPerspective(frameDimensions, 90, 0.1, 150)
     });
     mAnimationUniforms->pushUniformData({time});
 
@@ -177,12 +181,15 @@ void Application::initGeometry(){
         }
     };
 
+    ModelContainer mc = ModelContainer("../assets/cube.gltf");
+
+
     // Get references to the GPU we are using. 
     // TODO: Abstract slightly more to hide logical vs physical devices
     VulkanDeviceHandlePair deviceInfo = {mLogicalDevice.handle(), mPhysDevice.handle()};
 
     // Create a new vertex buffer on the GPU using the given geometry 
-    mGeometry = std::make_shared<SimpleVertexBuffer>(triangleVerts, deviceInfo);
+    mGeometry = std::make_shared<SimpleVertexBuffer>(mc.verts, deviceInfo);
 
     // Check to make sure the geometry was uploaded to the GPU correctly. 
     assert(mGeometry->getDeviceSyncState() == DEVICE_IN_SYNC);
@@ -220,6 +227,11 @@ void Application::initUniforms(){
     
     VulkanGraphicsApp::addUniform(0, mTransformUniforms);
     VulkanGraphicsApp::addUniform(1, mAnimationUniforms);
+}
+
+static glm::mat4 getPerspective(const VkExtent2D& frameDim, float fov, float near, float far){
+    float aspect = frameDim.width / frameDim.height;
+    return(glm::perspective(fov, aspect, near, far));
 }
 
 static glm::mat4 getOrthographicProjection(const VkExtent2D& frameDim){
