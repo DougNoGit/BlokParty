@@ -15,9 +15,9 @@
 using SimpleVertexBuffer = VertexAttributeBuffer<SimpleVertex>;
 using SimpleVertexInput = VertexInputTemplate<SimpleVertex>;
 
-struct Transforms {
-    alignas(16) glm::mat4 View;    
+struct Transforms {    
     alignas(16) glm::mat4 Model;
+    alignas(16) glm::mat4 View;    
     alignas(16) glm::mat4 Projection;
 };
 
@@ -153,9 +153,9 @@ void Application::render(){
     angle+=0.01;
     // Set the value of our uniform variable
     mTransformUniforms->pushUniformData({
-        glm::mat4(1),
         glm::translate(glm::vec3(.1*cos(time), .1*sin(time), -5)) * glm::rotate(angle, glm::vec3(0,1,0)),
-        getPerspective(frameDimensions, 90, 0.1, 150)
+        glm::mat4(1),
+        getPerspective(frameDimensions, 120, 0.1, 150)
     });
     mAnimationUniforms->pushUniformData({time});
 
@@ -165,7 +165,7 @@ void Application::render(){
 
 void Application::initGeometry(){
     //lab 4: add two other triangles (see lab write up)
-    // Define the vertex positions and colors for our triangle
+    // Define the vertex and colors for our triangle
     const static std::vector<SimpleVertex> triangleVerts = {
         {
             glm::vec3(-0.5, -0.5, 0.0), // Bottom-left: v0
@@ -181,7 +181,7 @@ void Application::initGeometry(){
         }
     };
 
-    ModelContainer mc = ModelContainer("../assets/cube.gltf");
+    ModelContainer mc = ModelContainer("../assets/suzanne.gltf");
 
 
     // Get references to the GPU we are using. 
@@ -200,7 +200,8 @@ void Application::initGeometry(){
     const static SimpleVertexInput vtxInput( /*binding = */ 0U,
         /*vertex attribute descriptions = */ {
             {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(SimpleVertex, pos)},
-            {1, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(SimpleVertex, color)}
+            {1, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(SimpleVertex, color)},
+            {2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(SimpleVertex, normal)}
         }
     );
     // Send this description to the GPU so that it knows how to interpret our vertex buffer 
@@ -230,7 +231,7 @@ void Application::initUniforms(){
 }
 
 static glm::mat4 getPerspective(const VkExtent2D& frameDim, float fov, float near, float far){
-    float aspect = frameDim.width / frameDim.height;
+    float aspect = (float)frameDim.width / (float)frameDim.height;
     return(glm::perspective(fov, aspect, near, far));
 }
 
