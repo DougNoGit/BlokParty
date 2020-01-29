@@ -230,7 +230,7 @@ void Application::initUniforms(){
 }
 
 static glm::mat4 getPerspective(const VkExtent2D& frameDim, float fov, float near, float far){
-    float aspect = frameDim.width / frameDim.height;
+    float aspect = (float)frameDim.width / (float)frameDim.height;
     return(glm::perspective(fov, aspect, near, far));
 }
 
