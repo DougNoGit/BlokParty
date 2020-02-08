@@ -19,7 +19,6 @@ struct Transforms {
     alignas(16) glm::mat4 View;    
     alignas(16) glm::mat4 Model;
     alignas(16) glm::mat4 Projection;
-    alignas(16) glm::mat4 Dummy;
 };
 
 struct AnimationInfo {
@@ -157,7 +156,6 @@ void Application::render(){
         glm::mat4(1),
         glm::translate(glm::vec3(.1*cos(time), .1*sin(time), -5)) * glm::rotate(angle, glm::vec3(0,1,0)),
         getPerspective(frameDimensions, 90, 0.1, 150),
-        glm::mat4(1)
     });
     mAnimationUniforms->pushUniformData({time});
 
