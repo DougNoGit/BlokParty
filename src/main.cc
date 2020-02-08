@@ -123,7 +123,7 @@ void Application::run(){
     std::cout << "Average Performance: " << globalRenderTimer.getReportString() << std::endl;
     
     // Make sure the GPU is done rendering before moving on. 
-    vkDeviceWaitIdle(mLogicalDevice.handle());
+    vkDeviceWaitIdle(mDeviceBundle.logicalDevice.handle());
 }
 
 void Application::cleanup(){
@@ -164,32 +164,12 @@ void Application::render(){
 }
 
 void Application::initGeometry(){
-    //lab 4: add two other triangles (see lab write up)
-    // Define the vertex and colors for our triangle
-    const static std::vector<SimpleVertex> triangleVerts = {
-        {
-            glm::vec3(-0.5, -0.5, 0.0), // Bottom-left: v0
-            glm::vec4(1.0, 1.0, 0.0, 1.0) // yellow
-        },
-        {
-            glm::vec3(0.0, .5, 0.0), // Top-middle: v1
-            glm::vec4(1.0, 0.0, 0.9, 1.0) // pink
-        },
-        {
-            glm::vec3(0.5, -0.5, 0.0), // Bottom-right: v2
-            glm::vec4(0.7, 0.0, 0.9, 1.0) // purply
-        }
-    };
 
     ModelContainer mc = ModelContainer("../assets/suzanne.gltf");
 
 
-    // Get references to the GPU we are using. 
-    // TODO: Abstract slightly more to hide logical vs physical devices
-    VulkanDeviceHandlePair deviceInfo = {mLogicalDevice.handle(), mPhysDevice.handle()};
-
     // Create a new vertex buffer on the GPU using the given geometry 
-    mGeometry = std::make_shared<SimpleVertexBuffer>(mc.verts, deviceInfo);
+    mGeometry = std::make_shared<SimpleVertexBuffer>(mc.verts, mDeviceBundle);
 
     // Check to make sure the geometry was uploaded to the GPU correctly. 
     assert(mGeometry->getDeviceSyncState() == DEVICE_IN_SYNC);
@@ -212,8 +192,8 @@ void Application::initGeometry(){
 void Application::initShaders(){
 
     // Load the compiled shader code from disk. 
-    VkShaderModule vertShader = vkutils::load_shader_module(mLogicalDevice.handle(), STRIFY(SHADER_DIR) "/standard.vert.spv");
-    VkShaderModule fragShader = vkutils::load_shader_module(mLogicalDevice.handle(), STRIFY(SHADER_DIR) "/vertexColor.frag.spv");
+    VkShaderModule vertShader = vkutils::load_shader_module(mDeviceBundle.logicalDevice.handle(), STRIFY(SHADER_DIR) "/standard.vert.spv");
+    VkShaderModule fragShader = vkutils::load_shader_module(mDeviceBundle.logicalDevice.handle(), STRIFY(SHADER_DIR) "/vertexColor.frag.spv");
     
     assert(vertShader != VK_NULL_HANDLE);
     assert(fragShader != VK_NULL_HANDLE);
