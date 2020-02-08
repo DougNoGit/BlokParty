@@ -164,22 +164,6 @@ void Application::render(){
 }
 
 void Application::initGeometry(){
-    //lab 4: add two other triangles (see lab write up)
-    // Define the vertex positions and colors for our triangle
-    const static std::vector<SimpleVertex> triangleVerts = {
-        {
-            glm::vec3(-0.5, -0.5, 0.0), // Bottom-left: v0
-            glm::vec4(1.0, 1.0, 0.0, 1.0) // yellow
-        },
-        {
-            glm::vec3(0.0, .5, 0.0), // Top-middle: v1
-            glm::vec4(1.0, 0.0, 0.9, 1.0) // pink
-        },
-        {
-            glm::vec3(0.5, -0.5, 0.0), // Bottom-right: v2
-            glm::vec4(0.7, 0.0, 0.9, 1.0) // purply
-        }
-    };
 
     ModelContainer mc = ModelContainer("../assets/cube.gltf");
 
