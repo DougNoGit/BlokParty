@@ -169,11 +169,7 @@ void Application::initGeometry(){
 
 
     // Create a new vertex buffer on the GPU using the given geometry 
-<<<<<<< HEAD
-    mGeometry = std::make_shared<SimpleVertexBuffer>(mc.verts, deviceInfo);
-=======
-    mGeometry = std::make_shared<SimpleVertexBuffer>(triangleVerts, mDeviceBundle);
->>>>>>> upstream/UniformRebase
+    mGeometry = std::make_shared<SimpleVertexBuffer>(mc.verts, mDeviceBundle);
 
     // Check to make sure the geometry was uploaded to the GPU correctly. 
     assert(mGeometry->getDeviceSyncState() == DEVICE_IN_SYNC);
