@@ -14,6 +14,8 @@
 #define VMA_IMPLEMENTATION
 #include "vk_mem_alloc.h"
 
+//ignore 
+
 using SimpleVertexBuffer = VertexAttributeBuffer<SimpleVertex>;
 using SimpleVertexInput = VertexInputTemplate<SimpleVertex>;
 
