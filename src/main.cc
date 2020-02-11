@@ -11,6 +11,8 @@
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "utils/ModelContainer.h"
+#define VMA_IMPLEMENTATION
+#include "vk_mem_alloc.h"
 
 using SimpleVertexBuffer = VertexAttributeBuffer<SimpleVertex>;
 using SimpleVertexInput = VertexInputTemplate<SimpleVertex>;
@@ -41,6 +43,7 @@ class Application : public VulkanGraphicsApp
     void cleanup();
 
  protected:
+    void initAllocator();
     void initGeometry();
     void initShaders();
     void initUniforms(); 
@@ -52,6 +55,7 @@ class Application : public VulkanGraphicsApp
     std::shared_ptr<SimpleVertexBuffer> mGeometry = nullptr;
     UniformTransformDataPtr mTransformUniforms = nullptr;
     UniformAnimationDataPtr mAnimationUniforms = nullptr;
+    VmaAllocator allocator;
 };
 
 
@@ -86,6 +90,8 @@ void Application::init(){
     // Initialize GPU devices and display setup
     VulkanSetupBaseApp::init(); 
 
+    // Initialize Vulkan Memory Allocator (VMA)
+    initAllocator();
     // Initialize geometry 
     initGeometry();
     // Initialize shaders
@@ -152,7 +158,7 @@ void Application::render(){
     // Set the value of our uniform variable
     mTransformUniforms->pushUniformData({
         glm::mat4(1),
-        glm::translate(glm::vec3(.1*cos(time), .1*sin(time), -5)) * glm::rotate(time, glm::vec3(0,1,0)),
+        glm::translate(glm::vec3(0, 0, -10)) * glm::rotate(time, glm::vec3(0,1,0)),
         getPerspective(frameDimensions, 90, 0.1, 150),
     });
     mAnimationUniforms->pushUniformData({time});
@@ -163,11 +169,11 @@ void Application::render(){
 
 void Application::initGeometry(){
 
-    ModelContainer mc = ModelContainer("../assets/cube.gltf");
+    ModelContainer mc = ModelContainer("../assets/GearboxAssy.gltf");
 
 
     // Create a new vertex buffer on the GPU using the given geometry 
-    mGeometry = std::make_shared<SimpleVertexBuffer>(mc.verts, mDeviceBundle);
+    mGeometry = std::make_shared<SimpleVertexBuffer>(mc.verts, allocator, mDeviceBundle);
 
     // Check to make sure the geometry was uploaded to the GPU correctly. 
     assert(mGeometry->getDeviceSyncState() == DEVICE_IN_SYNC);
@@ -205,6 +211,14 @@ void Application::initUniforms(){
     
     VulkanGraphicsApp::addUniform(0, mTransformUniforms);
     VulkanGraphicsApp::addUniform(1, mAnimationUniforms);
+}
+
+void Application::initAllocator(){
+    VmaAllocatorCreateInfo allocatorInfo = {};
+    allocatorInfo.physicalDevice = mDeviceBundle.physicalDevice;
+    allocatorInfo.device = mDeviceBundle.logicalDevice;
+    
+    vmaCreateAllocator(&allocatorInfo, &allocator);
 }
 
 static glm::mat4 getPerspective(const VkExtent2D& frameDim, float fov, float near, float far){

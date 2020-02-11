@@ -65,7 +65,7 @@ void ModelContainer::createModelContainer()
                             positions[(int)indices[i] * 3+ 1],
                             positions[(int)indices[i] * 3 + 2]), 
                   glm::vec4(1,0,0,1) });
-        std::cout << "Index: " << (int)indices[i] << std::endl;
+        //std::cout << "Index: " << (int)indices[i] << std::endl;
       }
     }
   }

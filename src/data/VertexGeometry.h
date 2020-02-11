@@ -11,8 +11,9 @@
 #include <exception>
 #include <stdexcept>
 #include <cstring>
+#include "vk_mem_alloc.h"
 
-/* TODO: This class uses very naive memory allocation which will be brutally inefficient at scale. */
+/* TODO need to set up staging and index buffers */
 
 template<typename VertexType>
 class VertexAttributeBuffer : public DeviceSyncedBuffer
@@ -21,7 +22,7 @@ class VertexAttributeBuffer : public DeviceSyncedBuffer
     using vertex_type = VertexType; 
 
     VertexAttributeBuffer(){}
-    explicit VertexAttributeBuffer(const std::vector<VertexType>& aVertices, const VulkanDeviceBundle& aDeviceBundle = {}, bool aSkipDeviceUpload = false) : mCpuVertexData(aVertices) {
+    explicit VertexAttributeBuffer(const std::vector<VertexType>& aVertices, VmaAllocator allocator, const VulkanDeviceBundle& aDeviceBundle = {}, bool aSkipDeviceUpload = false) : mCpuVertexData(aVertices), allocator(allocator) {
         if(aDeviceBundle.isValid() && !aSkipDeviceUpload) updateDevice(aDeviceBundle); 
     }
 
@@ -68,6 +69,8 @@ class VertexAttributeBuffer : public DeviceSyncedBuffer
 
 
     std::vector<VertexType> mCpuVertexData;
+    VmaAllocator allocator;
+    VmaAllocation allocation;
     DeviceSyncStateEnum mDeviceSyncState = DEVICE_EMPTY;
     
 
@@ -102,85 +105,31 @@ void VertexAttributeBuffer<VertexType>::updateDevice(const VulkanDeviceBundle& a
 template<typename VertexType>
 void VertexAttributeBuffer<VertexType>::setupDeviceUpload(VulkanDeviceHandlePair aDevicePair){
     VkDeviceSize requiredSize = sizeof(VertexType) * mCpuVertexData.size();
-    
+
     if(mDeviceSyncState == DEVICE_EMPTY || requiredSize != mCurrentBufferSize){
-        VkBufferCreateInfo createInfo;
-        {
-            createInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-            createInfo.pNext = nullptr;
-            createInfo.flags = 0;
-            createInfo.size = requiredSize;
-            createInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-            createInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-            createInfo.queueFamilyIndexCount = 0U;
-            createInfo.pQueueFamilyIndices = nullptr;
-        }
+        VkBufferCreateInfo bufferInfo = { VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO };
+        bufferInfo.size = requiredSize;
+        bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+        
+        VmaAllocationCreateInfo allocInfo = {};
+        allocInfo.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+        vmaCreateBuffer(allocator, &bufferInfo, &allocInfo, &mVertexBuffer, &allocation, nullptr);
 
-        if(vkCreateBuffer(aDevicePair.device, &createInfo, nullptr, &mVertexBuffer) != VK_SUCCESS){
-            throw std::runtime_error("Failed to create vertex buffer!"); 
-        }
     }
-
 }
 
 template<typename VertexType>
 void VertexAttributeBuffer<VertexType>::uploadToDevice(VulkanDeviceHandlePair aDevicePair){
     VkDeviceSize requiredSize = sizeof(VertexType) * mCpuVertexData.size();
     
-    if(mDeviceSyncState == DEVICE_EMPTY || requiredSize != mCurrentBufferSize){
-        VkMemoryRequirements memRequirements;
-        vkGetBufferMemoryRequirements(aDevicePair.device, mVertexBuffer, &memRequirements);
-
-        VkPhysicalDeviceMemoryProperties memoryProps;
-        vkGetPhysicalDeviceMemoryProperties(aDevicePair.physicalDevice, &memoryProps);
-
-        uint32_t memTypeIndex = VK_MAX_MEMORY_TYPES; 
-        for(uint32_t i = 0; i < memoryProps.memoryTypeCount; ++i){
-            if(memRequirements.memoryTypeBits & (1 << i) && memoryProps.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT){
-                memTypeIndex = i;
-                break;
-            }
-        }
-        if(memTypeIndex == VK_MAX_MEMORY_TYPES){
-            throw std::runtime_error("No compatible memory type could be found for uploading vertex attribute buffer to device!");
-        }
-
-        VkMemoryAllocateInfo allocInfo;
-        {
-            allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-            allocInfo.pNext = nullptr;
-            allocInfo.allocationSize = memRequirements.size;
-            allocInfo.memoryTypeIndex = memTypeIndex;
-        }
-
-        _mCurrentDeviceAllocSize = memRequirements.size;
-
-        if(vkAllocateMemory(aDevicePair.device, &allocInfo, nullptr, &mVertexBufferMemory) != VK_SUCCESS){
-            throw std::runtime_error("Failed to allocate memory for vertex attribute buffer!");
-        }
-
-        vkBindBufferMemory(aDevicePair.device, mVertexBuffer, mVertexBufferMemory, 0);
-        mCurrentBufferSize = requiredSize;
-    }
-
+    mCurrentBufferSize = requiredSize;
     void* mappedPtr = nullptr;
-    VkResult mapResult = vkMapMemory(aDevicePair.device, mVertexBufferMemory, 0, _mCurrentDeviceAllocSize , 0, &mappedPtr);
+    VkResult mapResult = vmaMapMemory(allocator, allocation, &mappedPtr);
     if(mapResult != VK_SUCCESS || mappedPtr == nullptr) throw std::runtime_error("Failed to map memory during vertex attribute buffer upload!");
     {
         memcpy(mappedPtr, mCpuVertexData.data(), mCurrentBufferSize);
 
-        VkMappedMemoryRange mappedMemRange;
-        {
-            mappedMemRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-            mappedMemRange.pNext = nullptr;
-            mappedMemRange.memory = mVertexBufferMemory;
-            mappedMemRange.offset = 0;
-            mappedMemRange.size = _mCurrentDeviceAllocSize;
-        }
-        if(vkFlushMappedMemoryRanges(aDevicePair.device, 1, &mappedMemRange) != VK_SUCCESS){
-            throw std::runtime_error("Failed to flush mapped memory during vertex attribute buffer upload!");
-        }
-    }vkUnmapMemory(aDevicePair.device, mVertexBufferMemory); mappedPtr = nullptr;
+    }vmaUnmapMemory(allocator, allocation); mappedPtr = nullptr;
 
 }
 
@@ -192,7 +141,8 @@ void VertexAttributeBuffer<VertexType>::finalizeDeviceUpload(VulkanDeviceHandleP
 template<typename VertexType>
 void VertexAttributeBuffer<VertexType>::_cleanup(){
     if(mVertexBuffer != VK_NULL_HANDLE){
-        vkDestroyBuffer(mCurrentDevice.device, mVertexBuffer, nullptr);
+        vmaDestroyBuffer(allocator, mVertexBuffer, allocation);
+        vmaDestroyAllocator(allocator);
         mVertexBuffer = VK_NULL_HANDLE;
     }
     if(mVertexBufferMemory != VK_NULL_HANDLE){
