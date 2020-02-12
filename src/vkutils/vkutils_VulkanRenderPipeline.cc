@@ -1,6 +1,9 @@
 #include "vkutils.h"
 #include <cassert>
 
+#include <array>
+
+
 namespace vkutils
 {
 
