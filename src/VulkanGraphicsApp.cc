@@ -86,10 +86,10 @@ void VulkanGraphicsApp::resetRenderSetup(){
     VulkanSetupBaseApp::initSwapchain();
     initUniformBuffer();
     initRenderPipeline();
+    initDepthResources();
     initFramebuffers();
     initCommands();
     initSync();
-    initDepthResources();
 
     sWindowFlags[mWindow].resized = false;
 }
@@ -344,6 +344,9 @@ void VulkanGraphicsApp::cleanupSwapchainDependents(){
         vkDestroyFramebuffer(mDeviceBundle.logicalDevice.handle(), fb, nullptr);
     }
 
+    vkDestroyImageView(mDeviceBundle.logicalDevice, depthImageView, nullptr);
+    vkDestroyImage(mDeviceBundle.logicalDevice, depthImage, nullptr);
+    vkFreeMemory(mDeviceBundle.logicalDevice, depthImageMemory, nullptr);
     mRenderPipeline.destroy();
 }
 
