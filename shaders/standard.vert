@@ -19,5 +19,5 @@ layout(binding = 1) uniform AnimationInfo{
 void main(){
     gl_Position =  uTransforms.Projection * uTransforms.View * uTransforms.Model * vertPos;
     //fragVtxColor = mix(vertCol, vec4(1.0, 1.0, 1.0, 0.0) - vertCol, (sin(uAnimInfo.time*2.5)+1.0) / 2.0);
-    fragVtxColor = uTransforms.View * uTransforms.Model * vertNor;
+    fragVtxColor = vertNor*.5+.5;
 }
