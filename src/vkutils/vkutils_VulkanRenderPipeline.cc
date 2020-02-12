@@ -78,6 +78,7 @@ void BasicVulkanRenderPipeline::build(const GraphicsPipelineConstructionSet& aFi
         pipelineInfo.pRasterizationState = &aFinalCtorSet.mRasterInfo;
         pipelineInfo.pMultisampleState = &aFinalCtorSet.mMultisampleInfo;
         pipelineInfo.pDepthStencilState = &aFinalCtorSet.mDepthInfo;
+        //pipelineInfo.pDepthStencilState = nullptr;
         pipelineInfo.pColorBlendState = &aFinalCtorSet.mColorBlendInfo;
         pipelineInfo.pDynamicState = aFinalCtorSet.mDynamicStates.empty() ? nullptr : &dynamicStateInfo;
         pipelineInfo.layout = mGraphicsPipeLayout;
@@ -158,19 +159,12 @@ void BasicVulkanRenderPipeline::prepareFixedStages(GraphicsPipelineConstructionS
         aCtorSetInOut.mBlendAttachmentInfo.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
     }
 
-    {
-        aCtorSetInOut.mDepthInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-        aCtorSetInOut.mDepthInfo.depthTestEnable = VK_TRUE;
-        aCtorSetInOut.mDepthInfo.depthWriteEnable = VK_TRUE;
-        aCtorSetInOut.mDepthInfo.flags = 0;
-        aCtorSetInOut.mDepthInfo.front = {};
-        aCtorSetInOut.mDepthInfo.back = {};
-        aCtorSetInOut.mDepthInfo.depthCompareOp = VK_COMPARE_OP_LESS;
-        aCtorSetInOut.mDepthInfo.depthBoundsTestEnable = VK_FALSE;
-        aCtorSetInOut.mDepthInfo.minDepthBounds = 0.0f;
-        aCtorSetInOut.mDepthInfo.maxDepthBounds = 1.0f;
-        aCtorSetInOut.mDepthInfo.stencilTestEnable = VK_FALSE;
-    }
+    aCtorSetInOut.mDepthInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+    aCtorSetInOut.mDepthInfo.depthTestEnable = VK_TRUE;
+    aCtorSetInOut.mDepthInfo.depthWriteEnable = VK_TRUE;
+    aCtorSetInOut.mDepthInfo.depthCompareOp = VK_COMPARE_OP_LESS;
+    aCtorSetInOut.mDepthInfo.depthBoundsTestEnable = VK_FALSE;
+    aCtorSetInOut.mDepthInfo.stencilTestEnable = VK_FALSE;
 
     {
         aCtorSetInOut.mColorBlendInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
@@ -260,6 +254,7 @@ void BasicVulkanRenderPipeline::prepareRenderPass(GraphicsPipelineConstructionSe
         aCtorSetInOut.mRenderpassCtorSet.mDependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
         aCtorSetInOut.mRenderpassCtorSet.mDependency.dependencyFlags = 0;
     }
+
 }
 
 VkFormat BasicVulkanRenderPipeline::findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features, VkPhysicalDevice mPhysicalDevice) {

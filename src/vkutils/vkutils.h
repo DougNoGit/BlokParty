@@ -54,12 +54,12 @@ class RenderPassConstructionSet
     // the render pass. 
     VulkanSwapchainBundle const* mSwapchainBundle = nullptr;
 
-    VkAttachmentDescription mColorAttachment;
-    VkAttachmentDescription mDepthAttachment;
-    VkAttachmentReference mAttachmentRef;
-    VkAttachmentReference mAttachmentRef1;
-    VkSubpassDescription mSubpass;
-    VkSubpassDependency mDependency;
+    VkAttachmentDescription mColorAttachment = {};
+    VkAttachmentDescription mDepthAttachment = {};
+    VkAttachmentReference mAttachmentRef = {};
+    VkAttachmentReference mAttachmentRef1 = {};
+    VkSubpassDescription mSubpass = {};
+    VkSubpassDependency mDependency = {};
 
  protected:
     friend class GraphicsPipelineConstructionSet;
@@ -94,7 +94,7 @@ class GraphicsPipelineConstructionSet
     VkRect2D mScissor;
     VkPipelineRasterizationStateCreateInfo mRasterInfo;
     VkPipelineMultisampleStateCreateInfo mMultisampleInfo;
-    VkPipelineDepthStencilStateCreateInfo mDepthInfo;
+    VkPipelineDepthStencilStateCreateInfo mDepthInfo = {};
     VkPipelineColorBlendAttachmentState mBlendAttachmentInfo;
     VkPipelineColorBlendStateCreateInfo mColorBlendInfo;
     VkPipelineLayoutCreateInfo mPipelineLayoutInfo;

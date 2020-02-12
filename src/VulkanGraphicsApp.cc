@@ -288,7 +288,7 @@ void VulkanGraphicsApp::initCommands(){
 void VulkanGraphicsApp::initFramebuffers(){
     mSwapchainFramebuffers.resize(mSwapchainBundle.views.size());
     std::array<VkImageView, 2> attachments;
-
+    
     for(size_t i = 0; i < mSwapchainBundle.views.size(); ++i){
         attachments = { mSwapchainBundle.views[i], depthImageView };
         VkFramebufferCreateInfo framebufferInfo;{
