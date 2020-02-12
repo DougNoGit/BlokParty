@@ -214,7 +214,9 @@ void Application::initUniforms(){
 
 static glm::mat4 getPerspective(const VkExtent2D& frameDim, float fov, float near, float far){
     float aspect = (float)frameDim.width / (float)frameDim.height;
-    return(glm::perspective(fov, aspect, near, far));
+    glm::mat4 perspective = glm::perspective(fov, aspect, near, far);
+    perspective[1][1] = perspective[1][1]*-1;
+    return perspective;
 }
 
 static glm::mat4 getOrthographicProjection(const VkExtent2D& frameDim){
