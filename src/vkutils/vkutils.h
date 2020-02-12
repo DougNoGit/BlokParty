@@ -55,7 +55,9 @@ class RenderPassConstructionSet
     VulkanSwapchainBundle const* mSwapchainBundle = nullptr;
 
     VkAttachmentDescription mColorAttachment;
+    VkAttachmentDescription mDepthAttachment;
     VkAttachmentReference mAttachmentRef;
+    VkAttachmentReference mAttachmentRef1;
     VkSubpassDescription mSubpass;
     VkSubpassDependency mDependency;
 
@@ -92,6 +94,7 @@ class GraphicsPipelineConstructionSet
     VkRect2D mScissor;
     VkPipelineRasterizationStateCreateInfo mRasterInfo;
     VkPipelineMultisampleStateCreateInfo mMultisampleInfo;
+    VkPipelineDepthStencilStateCreateInfo mDepthInfo;
     VkPipelineColorBlendAttachmentState mBlendAttachmentInfo;
     VkPipelineColorBlendStateCreateInfo mColorBlendInfo;
     VkPipelineLayoutCreateInfo mPipelineLayoutInfo;
@@ -120,6 +123,7 @@ class BasicVulkanRenderPipeline
 
     bool isValid() const {return(_mValid);}
 
+
     /// Setup and return a default construction set as a non-const reference
     GraphicsPipelineConstructionSet& setupConstructionSet(const VkDevice& aLogicalDevice, const VulkanSwapchainBundle* aChainBundle);
 
@@ -128,7 +132,10 @@ class BasicVulkanRenderPipeline
     /// tweaks can be made to the construction set prior to actual pipeline creation. 
     static void prepareFixedStages(GraphicsPipelineConstructionSet& aCtorSetInOut);
     static void prepareViewport(GraphicsPipelineConstructionSet& aCtorSetInOut);
-    static void prepareRenderPass(GraphicsPipelineConstructionSet& aCtorSetInOut);
+    static void prepareRenderPass(GraphicsPipelineConstructionSet& aCtorSetInOut, VkPhysicalDevice mPhysicalDevice);
+    static VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features, VkPhysicalDevice mPhysicalDevice);
+    static VkFormat findDepthFormat(VkPhysicalDevice mPhysicalDevice);
+
 
     /// Submit aFinalCtorSet as the construction set for this pipeline. The pipeline
     /// is then created fresh using the given construction set. The success of this

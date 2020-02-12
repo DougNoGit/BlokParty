@@ -46,13 +46,22 @@ class VulkanGraphicsApp : public VulkanSetupBaseApp{
     void initFramebuffers();
     void initCommands();
     void initSync();
-
+    
     void resetRenderSetup();
     void cleanupSwapchainDependents();
 
     void initUniformBuffer();
     void initUniformDescriptorPool();
     void initUniformDescriptorSets();
+
+    void initDepthResources();
+    VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
+    VkFormat findDepthFormat();
+    bool hasStencilComponent(VkFormat format);
+
+    void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
+    uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+    VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
 
     const static int IN_FLIGHT_FRAME_LIMIT = 2;
     std::vector<VkFramebuffer> mSwapchainFramebuffers;
@@ -81,6 +90,10 @@ class VulkanGraphicsApp : public VulkanSetupBaseApp{
     VkDescriptorPool mUniformDescriptorPool = VK_NULL_HANDLE;
     std::vector<VkDescriptorSetLayout> mUniformDescriptorSetLayouts;
     std::vector<VkDescriptorSet> mUniformDescriptorSets;
+
+    VkImage depthImage;
+    VkDeviceMemory depthImageMemory;
+    VkImageView depthImageView;
 };
 
 #endif

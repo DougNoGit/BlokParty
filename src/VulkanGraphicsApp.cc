@@ -11,7 +11,9 @@
     
 void VulkanGraphicsApp::init(){
     initUniformBuffer();
+    initDepthResources();
     initRenderPipeline();
+    
     initFramebuffers();
     initCommands();
     initSync();
@@ -87,6 +89,7 @@ void VulkanGraphicsApp::resetRenderSetup(){
     initFramebuffers();
     initCommands();
     initSync();
+    initDepthResources();
 
     sWindowFlags[mWindow].resized = false;
 }
@@ -211,7 +214,7 @@ void VulkanGraphicsApp::initRenderPipeline(){
     ctorSet.mPipelineLayoutInfo.pPushConstantRanges = nullptr;
 
     vkutils::BasicVulkanRenderPipeline::prepareViewport(ctorSet);
-    vkutils::BasicVulkanRenderPipeline::prepareRenderPass(ctorSet);
+    vkutils::BasicVulkanRenderPipeline::prepareRenderPass(ctorSet, mDeviceBundle.physicalDevice);
     mRenderPipeline.build(ctorSet);
 }
 
@@ -247,15 +250,17 @@ void VulkanGraphicsApp::initCommands(){
             throw std::runtime_error("Failed to begine command recording!");
         }
 
-        static const VkClearValue clearColor = {{{0.0f, 0.0f, 0.0f, 1.0f}}};
+        std::array<VkClearValue, 2> clearValues = {};
+        clearValues[0].color = {0.0f, 0.0f, 0.0f, 1.0f};
+        clearValues[1].depthStencil = {1.0f, 0};
         VkRenderPassBeginInfo renderBegin;{
             renderBegin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
             renderBegin.pNext = nullptr;
             renderBegin.renderPass = mRenderPipeline.getRenderpass();
             renderBegin.framebuffer = mSwapchainFramebuffers[i];
             renderBegin.renderArea = {{0,0}, mSwapchainBundle.extent};
-            renderBegin.clearValueCount = 1;
-            renderBegin.pClearValues = &clearColor;
+            renderBegin.clearValueCount = static_cast<uint32_t>(clearValues.size());;
+            renderBegin.pClearValues = clearValues.data();
         }
 
         vkCmdBeginRenderPass(mCommandBuffers[i], &renderBegin, VK_SUBPASS_CONTENTS_INLINE);
@@ -282,14 +287,17 @@ void VulkanGraphicsApp::initCommands(){
 
 void VulkanGraphicsApp::initFramebuffers(){
     mSwapchainFramebuffers.resize(mSwapchainBundle.views.size());
+    std::array<VkImageView, 2> attachments;
+
     for(size_t i = 0; i < mSwapchainBundle.views.size(); ++i){
+        attachments = { mSwapchainBundle.views[i], depthImageView };
         VkFramebufferCreateInfo framebufferInfo;{
             framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
             framebufferInfo.pNext = nullptr;
             framebufferInfo.flags = 0;
             framebufferInfo.renderPass = mRenderPipeline.getRenderpass();
-            framebufferInfo.attachmentCount = 1;
-            framebufferInfo.pAttachments = &mSwapchainBundle.views[i];
+            framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());;
+            framebufferInfo.pAttachments = attachments.data();
             framebufferInfo.width = mSwapchainBundle.extent.width;
             framebufferInfo.height = mSwapchainBundle.extent.height;
             framebufferInfo.layers = 1;
@@ -438,3 +446,103 @@ void VulkanGraphicsApp::initUniformDescriptorSets() {
     vkUpdateDescriptorSets(mDeviceBundle.logicalDevice, setWriters.size(), setWriters.data(), 0, nullptr);
 }
 
+void VulkanGraphicsApp::initDepthResources(){
+    VkFormat depthFormat = findDepthFormat();
+    createImage(mSwapchainBundle.extent.width, mSwapchainBundle.extent.height, depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, depthImage, depthImageMemory);
+    depthImageView = createImageView(depthImage, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
+}
+
+VkFormat VulkanGraphicsApp::findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features) {
+    for (VkFormat format : candidates) {
+        VkFormatProperties props;
+        vkGetPhysicalDeviceFormatProperties(mDeviceBundle.physicalDevice, format, &props);
+
+        if (tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features) {
+            return format;
+        } else if (tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features) {
+            return format;
+        }
+    }
+
+    throw std::runtime_error("failed to find supported format!");
+}
+
+VkFormat VulkanGraphicsApp::findDepthFormat() {
+    return findSupportedFormat(
+        {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT},
+        VK_IMAGE_TILING_OPTIMAL,
+        VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
+    );
+}
+
+bool VulkanGraphicsApp::hasStencilComponent(VkFormat format) {
+    return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
+}
+
+void VulkanGraphicsApp::createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory) {
+    VkImageCreateInfo imageInfo = {};
+    imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    imageInfo.imageType = VK_IMAGE_TYPE_2D;
+    imageInfo.extent.width = width;
+    imageInfo.extent.height = height;
+    imageInfo.extent.depth = 1;
+    imageInfo.mipLevels = 1;
+    imageInfo.arrayLayers = 1;
+    imageInfo.format = format;
+    imageInfo.tiling = tiling;
+    imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    imageInfo.usage = usage;
+    imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+    imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    if (vkCreateImage(mDeviceBundle.logicalDevice, &imageInfo, nullptr, &image) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create image!");
+    }
+
+    VkMemoryRequirements memRequirements;
+    vkGetImageMemoryRequirements(mDeviceBundle.logicalDevice, image, &memRequirements);
+
+    VkMemoryAllocateInfo allocInfo = {};
+    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    allocInfo.allocationSize = memRequirements.size;
+    allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
+
+    if (vkAllocateMemory(mDeviceBundle.logicalDevice, &allocInfo, nullptr, &imageMemory) != VK_SUCCESS) {
+        throw std::runtime_error("failed to allocate image memory!");
+    }
+
+    vkBindImageMemory(mDeviceBundle.logicalDevice, image, imageMemory, 0);
+}
+
+uint32_t VulkanGraphicsApp::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
+    VkPhysicalDeviceMemoryProperties memProperties;
+    vkGetPhysicalDeviceMemoryProperties(mDeviceBundle.physicalDevice, &memProperties);
+
+    for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
+        if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+            return i;
+        }
+    }
+
+    throw std::runtime_error("failed to find suitable memory type!");
+}
+
+VkImageView VulkanGraphicsApp::createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags) {
+        VkImageViewCreateInfo viewInfo = {};
+        viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+        viewInfo.image = image;
+        viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+        viewInfo.format = format;
+        viewInfo.subresourceRange.aspectMask = aspectFlags;
+        viewInfo.subresourceRange.baseMipLevel = 0;
+        viewInfo.subresourceRange.levelCount = 1;
+        viewInfo.subresourceRange.baseArrayLayer = 0;
+        viewInfo.subresourceRange.layerCount = 1;
+
+        VkImageView imageView;
+        if (vkCreateImageView(mDeviceBundle.logicalDevice, &viewInfo, nullptr, &imageView) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create texture image view!");
+        }
+
+        return imageView;
+    }

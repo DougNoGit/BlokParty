@@ -141,6 +141,7 @@ if(NOT WIN32)
   message(STATUS "Adding GCC style compiler flags")
   add_compile_options("-Wall")
   add_compile_options("-pedantic")
+  add_compile_options("-g")
   add_compile_options("-Werror=return-type")
 endif()
 

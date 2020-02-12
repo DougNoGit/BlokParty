@@ -5,6 +5,8 @@
 #include "utils/FpsTimer.h"
 #include <iostream>
 #include <memory> // Include shared_ptr
+#define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/transform.hpp>
 #define TINYGLTF_IMPLEMENTATION
@@ -153,7 +155,7 @@ void Application::render(){
     angle+=0.01;
     // Set the value of our uniform variable
     mTransformUniforms->pushUniformData({
-        glm::translate(glm::vec3(.1*cos(time), .1*sin(time), -5)) * glm::rotate(angle, glm::vec3(0,1,0)),
+        glm::translate(glm::vec3(.1*cos(time), .1*sin(time), -5)) * glm::rotate(time, glm::vec3(0,1,0)),
         glm::mat4(1),
         getPerspective(frameDimensions, 120, 0.1, 150)
     });

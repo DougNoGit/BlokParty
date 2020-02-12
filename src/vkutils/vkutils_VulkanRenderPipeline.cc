@@ -38,12 +38,13 @@ void BasicVulkanRenderPipeline::build(const GraphicsPipelineConstructionSet& aFi
         dynamicStateInfo.pDynamicStates = aFinalCtorSet.mDynamicStates.data();
     }
 
+    std::array<VkAttachmentDescription, 2> attachments = {aFinalCtorSet.mRenderpassCtorSet.mColorAttachment, aFinalCtorSet.mRenderpassCtorSet.mDepthAttachment};
     VkRenderPassCreateInfo renderPassInfo;{
         renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
         renderPassInfo.pNext = nullptr;
         renderPassInfo.flags = 0;
-        renderPassInfo.attachmentCount = 1;
-        renderPassInfo.pAttachments = &aFinalCtorSet.mRenderpassCtorSet.mColorAttachment;
+        renderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+        renderPassInfo.pAttachments = attachments.data();
         renderPassInfo.subpassCount = 1;
         renderPassInfo.pSubpasses = &aFinalCtorSet.mRenderpassCtorSet.mSubpass;
         renderPassInfo.dependencyCount = 1;
@@ -76,7 +77,7 @@ void BasicVulkanRenderPipeline::build(const GraphicsPipelineConstructionSet& aFi
         pipelineInfo.pViewportState = &viewportInfo;
         pipelineInfo.pRasterizationState = &aFinalCtorSet.mRasterInfo;
         pipelineInfo.pMultisampleState = &aFinalCtorSet.mMultisampleInfo;
-        pipelineInfo.pDepthStencilState = nullptr;
+        pipelineInfo.pDepthStencilState = &aFinalCtorSet.mDepthInfo;
         pipelineInfo.pColorBlendState = &aFinalCtorSet.mColorBlendInfo;
         pipelineInfo.pDynamicState = aFinalCtorSet.mDynamicStates.empty() ? nullptr : &dynamicStateInfo;
         pipelineInfo.layout = mGraphicsPipeLayout;
@@ -158,6 +159,20 @@ void BasicVulkanRenderPipeline::prepareFixedStages(GraphicsPipelineConstructionS
     }
 
     {
+        aCtorSetInOut.mDepthInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+        aCtorSetInOut.mDepthInfo.depthTestEnable = VK_TRUE;
+        aCtorSetInOut.mDepthInfo.depthWriteEnable = VK_TRUE;
+        aCtorSetInOut.mDepthInfo.flags = 0;
+        aCtorSetInOut.mDepthInfo.front = {};
+        aCtorSetInOut.mDepthInfo.back = {};
+        aCtorSetInOut.mDepthInfo.depthCompareOp = VK_COMPARE_OP_LESS;
+        aCtorSetInOut.mDepthInfo.depthBoundsTestEnable = VK_FALSE;
+        aCtorSetInOut.mDepthInfo.minDepthBounds = 0.0f;
+        aCtorSetInOut.mDepthInfo.maxDepthBounds = 1.0f;
+        aCtorSetInOut.mDepthInfo.stencilTestEnable = VK_FALSE;
+    }
+
+    {
         aCtorSetInOut.mColorBlendInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
         aCtorSetInOut.mColorBlendInfo.pNext = nullptr;
         aCtorSetInOut.mColorBlendInfo.flags = 0;
@@ -188,7 +203,7 @@ void BasicVulkanRenderPipeline::prepareViewport(GraphicsPipelineConstructionSet&
     }
 }
 
-void BasicVulkanRenderPipeline::prepareRenderPass(GraphicsPipelineConstructionSet& aCtorSetInOut){
+void BasicVulkanRenderPipeline::prepareRenderPass(GraphicsPipelineConstructionSet& aCtorSetInOut, VkPhysicalDevice mPhysicalDevice){
     {
         aCtorSetInOut.mRenderpassCtorSet.mColorAttachment.flags = 0;
         aCtorSetInOut.mRenderpassCtorSet.mColorAttachment.format = aCtorSetInOut.mSwapchainBundle->surface_format.format;
@@ -202,8 +217,25 @@ void BasicVulkanRenderPipeline::prepareRenderPass(GraphicsPipelineConstructionSe
     }
 
     {
+        aCtorSetInOut.mRenderpassCtorSet.mDepthAttachment.flags = 0;
+        aCtorSetInOut.mRenderpassCtorSet.mDepthAttachment.format = findDepthFormat(mPhysicalDevice);
+        aCtorSetInOut.mRenderpassCtorSet.mDepthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+        aCtorSetInOut.mRenderpassCtorSet.mDepthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+        aCtorSetInOut.mRenderpassCtorSet.mDepthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        aCtorSetInOut.mRenderpassCtorSet.mDepthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        aCtorSetInOut.mRenderpassCtorSet.mDepthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        aCtorSetInOut.mRenderpassCtorSet.mDepthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+        aCtorSetInOut.mRenderpassCtorSet.mDepthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+    }
+
+    {
         aCtorSetInOut.mRenderpassCtorSet.mAttachmentRef.attachment = 0;
         aCtorSetInOut.mRenderpassCtorSet.mAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    }
+
+    {
+        aCtorSetInOut.mRenderpassCtorSet.mAttachmentRef1.attachment = 1;
+        aCtorSetInOut.mRenderpassCtorSet.mAttachmentRef1.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
     }
 
     {
@@ -214,7 +246,7 @@ void BasicVulkanRenderPipeline::prepareRenderPass(GraphicsPipelineConstructionSe
         aCtorSetInOut.mRenderpassCtorSet.mSubpass.colorAttachmentCount = 1;
         aCtorSetInOut.mRenderpassCtorSet.mSubpass.pColorAttachments = &aCtorSetInOut.mRenderpassCtorSet.mAttachmentRef;
         aCtorSetInOut.mRenderpassCtorSet.mSubpass.pResolveAttachments = nullptr;
-        aCtorSetInOut.mRenderpassCtorSet.mSubpass.pDepthStencilAttachment = nullptr;
+        aCtorSetInOut.mRenderpassCtorSet.mSubpass.pDepthStencilAttachment = &aCtorSetInOut.mRenderpassCtorSet.mAttachmentRef1;
         aCtorSetInOut.mRenderpassCtorSet.mSubpass.preserveAttachmentCount = 0;
         aCtorSetInOut.mRenderpassCtorSet.mSubpass.pPreserveAttachments = nullptr;
     }
@@ -228,6 +260,30 @@ void BasicVulkanRenderPipeline::prepareRenderPass(GraphicsPipelineConstructionSe
         aCtorSetInOut.mRenderpassCtorSet.mDependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
         aCtorSetInOut.mRenderpassCtorSet.mDependency.dependencyFlags = 0;
     }
+}
+
+VkFormat BasicVulkanRenderPipeline::findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features, VkPhysicalDevice mPhysicalDevice) {
+    for (VkFormat format : candidates) {
+        VkFormatProperties props;
+        vkGetPhysicalDeviceFormatProperties(mPhysicalDevice, format, &props);
+
+        if (tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features) {
+            return format;
+        } else if (tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features) {
+            return format;
+        }
+    }
+
+    throw std::runtime_error("failed to find supported format!");
+}
+
+VkFormat BasicVulkanRenderPipeline::findDepthFormat(VkPhysicalDevice mPhysicalDevice) {
+    return findSupportedFormat(
+        {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT},
+        VK_IMAGE_TILING_OPTIMAL,
+        VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT,
+        mPhysicalDevice
+    );
 }
 
 } // end namespace vkutils

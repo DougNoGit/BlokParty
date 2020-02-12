@@ -68,8 +68,8 @@ void ModelContainer::createModelContainer()
                             normals[(int)indices[i] * 3 + 2])} 
                   );
         
-        std::cout << "N: " << normals[(int)indices[i] * 3] << " " << normals[(int)indices[i] * 3 + 1]  << " " << normals[(int)indices[i] * 3 + 2] << std::endl;
-        std::cout << "P: " << positions[(int)indices[i] * 3] << " " << positions[(int)indices[i] * 3 + 1]  << " " << positions[(int)indices[i] * 3 + 2] << std::endl;
+        //std::cout << "N: " << normals[(int)indices[i] * 3] << " " << normals[(int)indices[i] * 3 + 1]  << " " << normals[(int)indices[i] * 3 + 2] << std::endl;
+        //std::cout << "P: " << positions[(int)indices[i] * 3] << " " << positions[(int)indices[i] * 3 + 1]  << " " << positions[(int)indices[i] * 3 + 2] << std::endl;
       }
     }
   }
