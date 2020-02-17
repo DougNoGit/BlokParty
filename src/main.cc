@@ -17,9 +17,9 @@
 using SimpleVertexBuffer = VertexAttributeBuffer<SimpleVertex>;
 using SimpleVertexInput = VertexInputTemplate<SimpleVertex>;
 
-struct Transforms {    
-    alignas(16) glm::mat4 Model;
+struct Transforms {
     alignas(16) glm::mat4 View;    
+    alignas(16) glm::mat4 Model;
     alignas(16) glm::mat4 Projection;
 };
 
@@ -151,13 +151,11 @@ void Application::render(){
 
     float time = static_cast<float>(glfwGetTime());
     VkExtent2D frameDimensions = getFramebufferSize();
-    static float angle = 0;
-    angle+=0.01;
     // Set the value of our uniform variable
     mTransformUniforms->pushUniformData({
         glm::translate(glm::vec3(.1*cos(time), .1*sin(time), -5)) * glm::rotate(time, glm::vec3(0,1,0)),
         glm::mat4(1),
-        getPerspective(frameDimensions, 120, 0.1, 150)
+        getPerspective(frameDimensions, 90, 0.1, 150),
     });
     mAnimationUniforms->pushUniformData({time});
 
@@ -167,7 +165,7 @@ void Application::render(){
 
 void Application::initGeometry(){
 
-    ModelContainer mc = ModelContainer("../assets/suzanne.gltf");
+    ModelContainer mc = ModelContainer("../assets/cube.gltf");
 
 
     // Create a new vertex buffer on the GPU using the given geometry 
@@ -182,8 +180,7 @@ void Application::initGeometry(){
     const static SimpleVertexInput vtxInput( /*binding = */ 0U,
         /*vertex attribute descriptions = */ {
             {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(SimpleVertex, pos)},
-            {1, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(SimpleVertex, color)},
-            {2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(SimpleVertex, normal)}
+            {1, 0, VK_FORMAT_R32G32B32A32_SFLOAT, offsetof(SimpleVertex, color)}
         }
     );
     // Send this description to the GPU so that it knows how to interpret our vertex buffer 
