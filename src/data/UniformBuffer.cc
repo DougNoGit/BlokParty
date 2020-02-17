@@ -21,7 +21,7 @@ void UniformBuffer::bindUniformData(uint32_t aBindPoint, UniformDataInterfacePtr
         aUniformData,
         {
             /* binding = */ aBindPoint,
-            /* descriptorType = */ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+            /* descriptorType = */ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC,
             /* descriptorCount = */ 1,
             /* stageFlags = */ aStageFlags,
             /* pImmutableSamplers = */ nullptr

@@ -8,76 +8,89 @@
 #include <chrono>
 #include <thread>
 
-    
-void VulkanGraphicsApp::init(){
+void VulkanGraphicsApp::init()
+{
     initUniformBuffer();
     initDepthResources();
     initRenderPipeline();
-    
+
     initFramebuffers();
     initCommands();
     initSync();
 }
 
-const VkExtent2D& VulkanGraphicsApp::getFramebufferSize() const{
-    return(mViewportExtent);
+const VkExtent2D &VulkanGraphicsApp::getFramebufferSize() const
+{
+    return (mViewportExtent);
 }
 
 void VulkanGraphicsApp::setVertexInput(
-    const VkVertexInputBindingDescription& aBindingDescription,
-    const std::vector<VkVertexInputAttributeDescription>& aAttributeDescriptions
-){
+    const VkVertexInputBindingDescription &aBindingDescription,
+    const std::vector<VkVertexInputAttributeDescription> &aAttributeDescriptions)
+{
     mBindingDescription = aBindingDescription;
     mAttributeDescriptions = aAttributeDescriptions;
-    if(mVertexInputsHaveBeenSet){
-        //TODO: Verify this works 
+    if (mVertexInputsHaveBeenSet)
+    {
+        //TODO: Verify this works
         resetRenderSetup();
     }
     mVertexInputsHaveBeenSet = true;
 }
 
-void VulkanGraphicsApp::setVertexBuffer(const VkBuffer& aBuffer, size_t aVertexCount){
-    bool needsReset = mVertexBuffer != VK_NULL_HANDLE && (mVertexBuffer != aBuffer || mVertexCount != aVertexCount); 
+void VulkanGraphicsApp::setVertexBuffer(const VkBuffer &aBuffer, size_t aVertexCount)
+{
+    bool needsReset = mVertexBuffer != VK_NULL_HANDLE && (mVertexBuffer != aBuffer || mVertexCount != aVertexCount);
     mVertexBuffer = aBuffer;
     mVertexCount = aVertexCount;
-    if(needsReset) resetRenderSetup(); // TODO: Verify 
+    if (needsReset)
+        resetRenderSetup(); // TODO: Verify
 }
 
-void VulkanGraphicsApp::setVertexShader(const std::string& aShaderName, const VkShaderModule& aShaderModule){
-    if(aShaderName.empty() || aShaderModule == VK_NULL_HANDLE){
+void VulkanGraphicsApp::setVertexShader(const std::string &aShaderName, const VkShaderModule &aShaderModule)
+{
+    if (aShaderName.empty() || aShaderModule == VK_NULL_HANDLE)
+    {
         throw std::runtime_error("VulkanGraphicsApp::setVertexShader() Error: Arguments must be a non-empty string and valid shader module!");
     }
     mShaderModules[aShaderName] = aShaderModule;
     mVertexKey = aShaderName;
-    if(mVertexKey == mFragmentKey){
+    if (mVertexKey == mFragmentKey)
+    {
         throw std::runtime_error("Error: Keys/Names for the vertex and fragment shader cannot be the same!");
     }
 }
 
-void VulkanGraphicsApp::setFragmentShader(const std::string& aShaderName, const VkShaderModule& aShaderModule){
-    if(aShaderName.empty() || aShaderModule == VK_NULL_HANDLE){
+void VulkanGraphicsApp::setFragmentShader(const std::string &aShaderName, const VkShaderModule &aShaderModule)
+{
+    if (aShaderName.empty() || aShaderModule == VK_NULL_HANDLE)
+    {
         throw std::runtime_error("VulkanGraphicsApp::setFragmentShader() Error: Arguments must be a non-empty string and valid shader module!");
     }
     mShaderModules[aShaderName] = aShaderModule;
     mFragmentKey = aShaderName;
-    if(mVertexKey == mFragmentKey){
+    if (mVertexKey == mFragmentKey)
+    {
         throw std::runtime_error("Error: Keys/Names for the vertex and fragment shader cannot be the same!");
     }
 }
 
-void VulkanGraphicsApp::addUniform(uint32_t aBindingPoint, UniformDataInterfacePtr aUniformData, VkShaderStageFlags aStages){
-    if(aUniformData == nullptr){
+void VulkanGraphicsApp::addUniform(uint32_t aBindingPoint, UniformDataInterfacePtr aUniformData, VkShaderStageFlags aStages)
+{
+    if (aUniformData == nullptr)
+    {
         std::cerr << "Ignoring attempt to add nullptr as uniform data!" << std::endl;
         return;
     }
 
     mUniformBuffer.bindUniformData(aBindingPoint, aUniformData, aStages);
 
-    if(mRenderPipeline.isValid())
+    if (mRenderPipeline.isValid())
         resetRenderSetup();
 }
 
-void VulkanGraphicsApp::resetRenderSetup(){
+void VulkanGraphicsApp::resetRenderSetup()
+{
     vkDeviceWaitIdle(mDeviceBundle.logicalDevice.handle());
 
     cleanupSwapchainDependents();
@@ -94,23 +107,28 @@ void VulkanGraphicsApp::resetRenderSetup(){
     sWindowFlags[mWindow].resized = false;
 }
 
-void VulkanGraphicsApp::render(){
+void VulkanGraphicsApp::render()
+{
     uint32_t targetImageIndex = 0;
     size_t syncObjectIndex = mFrameNumber % IN_FLIGHT_FRAME_LIMIT;
 
     vkWaitForFences(mDeviceBundle.logicalDevice.handle(), 1, &mInFlightFences[syncObjectIndex], VK_TRUE, std::numeric_limits<uint64_t>::max());
 
     VkResult result = vkAcquireNextImageKHR(mDeviceBundle.logicalDevice.handle(),
-        mSwapchainBundle.swapchain, std::numeric_limits<uint64_t>::max(),
-        mImageAvailableSemaphores[syncObjectIndex], VK_NULL_HANDLE, &targetImageIndex
-    );
-    if(result == VK_ERROR_OUT_OF_DATE_KHR || sWindowFlags[mWindow].resized){
+                                            mSwapchainBundle.swapchain, std::numeric_limits<uint64_t>::max(),
+                                            mImageAvailableSemaphores[syncObjectIndex], VK_NULL_HANDLE, &targetImageIndex);
+    if (result == VK_ERROR_OUT_OF_DATE_KHR || sWindowFlags[mWindow].resized)
+    {
         resetRenderSetup();
         render();
         return;
-    }else if(result == VK_SUBOPTIMAL_KHR){
+    }
+    else if (result == VK_SUBOPTIMAL_KHR)
+    {
         std::cerr << "Warning! Swapchain suboptimal" << std::endl;
-    }else if(result != VK_SUCCESS){
+    }
+    else if (result != VK_SUCCESS)
+    {
         throw std::runtime_error("Failed to get next image in swapchain!");
     }
 
@@ -119,15 +137,14 @@ void VulkanGraphicsApp::render(){
         VK_STRUCTURE_TYPE_SUBMIT_INFO, nullptr,
         1, &mImageAvailableSemaphores[syncObjectIndex], &waitStages,
         1, &mCommandBuffers[targetImageIndex],
-        1, &mRenderFinishSemaphores[syncObjectIndex]
-    };
+        1, &mRenderFinishSemaphores[syncObjectIndex]};
 
     vkResetFences(mDeviceBundle.logicalDevice.handle(), 1, &mInFlightFences[syncObjectIndex]);
 
-    
     mUniformBuffer.updateDevice();
 
-    if(vkQueueSubmit(mDeviceBundle.logicalDevice.getGraphicsQueue(), 1, &submitInfo, mInFlightFences[syncObjectIndex]) != VK_SUCCESS){
+    if (vkQueueSubmit(mDeviceBundle.logicalDevice.getGraphicsQueue(), 1, &submitInfo, mInFlightFences[syncObjectIndex]) != VK_SUCCESS)
+    {
         throw std::runtime_error("Submit to graphics queue failed!");
     }
 
@@ -139,47 +156,62 @@ void VulkanGraphicsApp::render(){
         /*swapchainCount = */ 1,
         /*pSwapchains = */ &mSwapchainBundle.swapchain,
         /*pImageIndices = */ &targetImageIndex,
-        /*pResults = */ nullptr
-    };
+        /*pResults = */ nullptr};
 
     vkQueuePresentKHR(mDeviceBundle.logicalDevice.getPresentationQueue(), &presentInfo);
 }
 
-void VulkanGraphicsApp::initRenderPipeline(){
-    if(!mVertexInputsHaveBeenSet){
+void VulkanGraphicsApp::initRenderPipeline()
+{
+    if (!mVertexInputsHaveBeenSet)
+    {
         throw std::runtime_error("Error! Render pipeline cannot be created before vertex input information has been set via 'setVertexInput()'");
-    }else if(mVertexKey.empty()){
+    }
+    else if (mVertexKey.empty())
+    {
         throw std::runtime_error("Error! No vertex shader has been set! A vertex shader must be set using setVertexShader()!");
-    }else if(mFragmentKey.empty()){
+    }
+    else if (mFragmentKey.empty())
+    {
         throw std::runtime_error("Error! No fragment shader has been set! A vertex shader must be set using setFragmentShader()!");
     }
 
-    vkutils::GraphicsPipelineConstructionSet& ctorSet =  mRenderPipeline.setupConstructionSet(mDeviceBundle.logicalDevice.handle(), &mSwapchainBundle);
+    vkutils::GraphicsPipelineConstructionSet &ctorSet = mRenderPipeline.setupConstructionSet(mDeviceBundle.logicalDevice.handle(), &mSwapchainBundle);
     vkutils::BasicVulkanRenderPipeline::prepareFixedStages(ctorSet);
 
     VkShaderModule vertShader = VK_NULL_HANDLE;
     VkShaderModule fragShader = VK_NULL_HANDLE;
     auto findVert = mShaderModules.find(mVertexKey);
     auto findFrag = mShaderModules.find(mFragmentKey);
-    if(findVert == mShaderModules.end()){
+    if (findVert == mShaderModules.end())
+    {
         throw std::runtime_error("Error: Vertex shader name '" + mVertexKey + "' did not map to a valid shader module");
-    }else{
+    }
+    else
+    {
         vertShader = findVert->second;
     }
-    if(findFrag == mShaderModules.end()){
+    if (findFrag == mShaderModules.end())
+    {
         std::cerr << "Error: Fragment shader name '" + mFragmentKey + "' did not map to a valid shader module. Using fallback..." << std::endl;
         findFrag = mShaderModules.find("fallback.frag");
-        if(findFrag != mShaderModules.end()){
+        if (findFrag != mShaderModules.end())
+        {
             fragShader = findFrag->second;
-        }else{
+        }
+        else
+        {
             fragShader = vkutils::load_shader_module(mDeviceBundle.logicalDevice.handle(), STRIFY(SHADER_DIR) "/fallback.frag.spv");
             mShaderModules["fallback.frag"] = fragShader;
         }
-    }else{
+    }
+    else
+    {
         fragShader = findFrag->second;
     }
-    
-    VkPipelineShaderStageCreateInfo vertStageInfo;{
+
+    VkPipelineShaderStageCreateInfo vertStageInfo;
+    {
         vertStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
         vertStageInfo.pNext = nullptr;
         vertStageInfo.flags = 0;
@@ -188,7 +220,8 @@ void VulkanGraphicsApp::initRenderPipeline(){
         vertStageInfo.pName = "main";
         vertStageInfo.pSpecializationInfo = nullptr;
     }
-    VkPipelineShaderStageCreateInfo fragStageInfo;{
+    VkPipelineShaderStageCreateInfo fragStageInfo;
+    {
         fragStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
         fragStageInfo.pNext = nullptr;
         fragStageInfo.flags = 0;
@@ -218,48 +251,58 @@ void VulkanGraphicsApp::initRenderPipeline(){
     mRenderPipeline.build(ctorSet);
 }
 
-void VulkanGraphicsApp::initCommands(){
-    VkCommandPoolCreateInfo poolInfo;{
+void VulkanGraphicsApp::initCommands()
+{
+    VkCommandPoolCreateInfo poolInfo;
+    {
         poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
         poolInfo.pNext = nullptr;
         poolInfo.flags = 0;
         poolInfo.queueFamilyIndex = *mDeviceBundle.physicalDevice.mGraphicsIdx;
     }
 
-    if(mCommandPool == VK_NULL_HANDLE){
-        if(vkCreateCommandPool(mDeviceBundle.logicalDevice.handle(), &poolInfo, nullptr, &mCommandPool) != VK_SUCCESS){
+    if (mCommandPool == VK_NULL_HANDLE)
+    {
+        if (vkCreateCommandPool(mDeviceBundle.logicalDevice.handle(), &poolInfo, nullptr, &mCommandPool) != VK_SUCCESS)
+        {
             throw std::runtime_error("Failed to create command pool for graphics queue!");
         }
     }
 
     mCommandBuffers.resize(mSwapchainFramebuffers.size());
-    VkCommandBufferAllocateInfo allocInfo;{
+    VkCommandBufferAllocateInfo allocInfo;
+    {
         allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
         allocInfo.pNext = nullptr;
         allocInfo.commandBufferCount = mCommandBuffers.size();
         allocInfo.commandPool = mCommandPool;
         allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     }
-    if(vkAllocateCommandBuffers(mDeviceBundle.logicalDevice.handle(), &allocInfo, mCommandBuffers.data()) != VK_SUCCESS){
+    if (vkAllocateCommandBuffers(mDeviceBundle.logicalDevice.handle(), &allocInfo, mCommandBuffers.data()) != VK_SUCCESS)
+    {
         throw std::runtime_error("Failed to allocate command buffers!");
     }
 
-    for(size_t i = 0; i < mCommandBuffers.size(); ++i){
-        VkCommandBufferBeginInfo beginInfo = {VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO, nullptr, 0 , nullptr};
-        if(vkBeginCommandBuffer(mCommandBuffers[i], &beginInfo) != VK_SUCCESS){
+    for (size_t i = 0; i < mCommandBuffers.size(); ++i)
+    {
+        VkCommandBufferBeginInfo beginInfo = {VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO, nullptr, 0, nullptr};
+        if (vkBeginCommandBuffer(mCommandBuffers[i], &beginInfo) != VK_SUCCESS)
+        {
             throw std::runtime_error("Failed to begine command recording!");
         }
 
         std::array<VkClearValue, 2> clearValues = {};
         clearValues[0].color = {0.0f, 0.0f, 0.0f, 1.0f};
         clearValues[1].depthStencil = {1.0f, 0};
-        VkRenderPassBeginInfo renderBegin;{
+        VkRenderPassBeginInfo renderBegin;
+        {
             renderBegin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
             renderBegin.pNext = nullptr;
             renderBegin.renderPass = mRenderPipeline.getRenderpass();
             renderBegin.framebuffer = mSwapchainFramebuffers[i];
-            renderBegin.renderArea = {{0,0}, mSwapchainBundle.extent};
-            renderBegin.clearValueCount = static_cast<uint32_t>(clearValues.size());;
+            renderBegin.renderArea = {{0, 0}, mSwapchainBundle.extent};
+            renderBegin.clearValueCount = static_cast<uint32_t>(clearValues.size());
+            ;
             renderBegin.pClearValues = clearValues.data();
         }
 
@@ -268,79 +311,102 @@ void VulkanGraphicsApp::initCommands(){
         vkCmdBindVertexBuffers(mCommandBuffers[i], 0, 1, &mVertexBuffer, std::array<VkDeviceSize, 1>{0}.data());
 
         // Bind uniforms to graphics pipeline if they exist
-        if(mUniformBuffer.getBoundDataCount() > 0){
-            const VkDescriptorSet* descriptorSets = mUniformDescriptorSets.data() + i;
+        // if (mUniformBuffer.getBoundDataCount() > 0)
+        // {
+        size_t minUboAlignment = mDeviceBundle.physicalDevice.mProperites.limits.minUniformBufferOffsetAlignment;
+        size_t dynamicAlignment = 3 * sizeof(glm::mat4);
+        if (minUboAlignment > 0)
+        {
+            dynamicAlignment = (dynamicAlignment + minUboAlignment - 1) & ~(minUboAlignment - 1);
+        }
+        for (int j = 0; j < 1; j++)
+        {
+
+            uint32_t dynamicOffset = j * static_cast<uint32_t>(dynamicAlignment);
+            const VkDescriptorSet *descriptorSets = mUniformDescriptorSets.data() + i;
             vkCmdBindDescriptorSets(
                 mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mRenderPipeline.getLayout(),
-                0, 1, descriptorSets, 0, nullptr
-            );
+                0, 1, descriptorSets, 2, &dynamicOffset);
+            vkCmdDraw(mCommandBuffers[i], mVertexCount, 1, 0, 0);
         }
 
-        vkCmdDraw(mCommandBuffers[i], mVertexCount, 1, 0, 0);
         vkCmdEndRenderPass(mCommandBuffers[i]);
 
-        if(vkEndCommandBuffer(mCommandBuffers[i]) != VK_SUCCESS){
+        //vkCmdDrawIndexed(mCommandBuffers[i], mVertexCount, 1, 0, 0, 0);
+
+        if (vkEndCommandBuffer(mCommandBuffers[i]) != VK_SUCCESS)
+        {
             throw std::runtime_error("Failed to end command buffer " + std::to_string(i));
         }
     }
 }
 
-void VulkanGraphicsApp::initFramebuffers(){
+void VulkanGraphicsApp::initFramebuffers()
+{
     mSwapchainFramebuffers.resize(mSwapchainBundle.views.size());
     std::array<VkImageView, 2> attachments;
-    
-    for(size_t i = 0; i < mSwapchainBundle.views.size(); ++i){
-        attachments = { mSwapchainBundle.views[i], depthImageView };
-        VkFramebufferCreateInfo framebufferInfo;{
+
+    for (size_t i = 0; i < mSwapchainBundle.views.size(); ++i)
+    {
+        attachments = {mSwapchainBundle.views[i], depthImageView};
+        VkFramebufferCreateInfo framebufferInfo;
+        {
             framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
             framebufferInfo.pNext = nullptr;
             framebufferInfo.flags = 0;
             framebufferInfo.renderPass = mRenderPipeline.getRenderpass();
-            framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());;
+            framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+            ;
             framebufferInfo.pAttachments = attachments.data();
             framebufferInfo.width = mSwapchainBundle.extent.width;
             framebufferInfo.height = mSwapchainBundle.extent.height;
             framebufferInfo.layers = 1;
         }
 
-        if(vkCreateFramebuffer(mDeviceBundle.logicalDevice.handle(), &framebufferInfo, nullptr, &mSwapchainFramebuffers[i]) != VK_SUCCESS){
+        if (vkCreateFramebuffer(mDeviceBundle.logicalDevice.handle(), &framebufferInfo, nullptr, &mSwapchainFramebuffers[i]) != VK_SUCCESS)
+        {
             throw std::runtime_error("Failed to create swap chain framebuffer " + std::to_string(i));
         }
     }
 }
 
-void VulkanGraphicsApp::initSync(){
+void VulkanGraphicsApp::initSync()
+{
     mImageAvailableSemaphores.resize(IN_FLIGHT_FRAME_LIMIT);
     mRenderFinishSemaphores.resize(IN_FLIGHT_FRAME_LIMIT);
     mInFlightFences.resize(IN_FLIGHT_FRAME_LIMIT);
 
     VkFenceCreateInfo fenceInfo = {VK_STRUCTURE_TYPE_FENCE_CREATE_INFO, nullptr, VK_FENCE_CREATE_SIGNALED_BIT};
-    VkSemaphoreCreateInfo semaphoreCreate = { VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO, nullptr, 0};
+    VkSemaphoreCreateInfo semaphoreCreate = {VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO, nullptr, 0};
 
     bool failure = false;
-    for(size_t i = 0 ; i < IN_FLIGHT_FRAME_LIMIT; ++i){
+    for (size_t i = 0; i < IN_FLIGHT_FRAME_LIMIT; ++i)
+    {
         failure |= vkCreateSemaphore(mDeviceBundle.logicalDevice.handle(), &semaphoreCreate, nullptr, &mImageAvailableSemaphores[i]) != VK_SUCCESS;
         failure |= vkCreateSemaphore(mDeviceBundle.logicalDevice.handle(), &semaphoreCreate, nullptr, &mRenderFinishSemaphores[i]) != VK_SUCCESS;
         failure |= vkCreateFence(mDeviceBundle.logicalDevice.handle(), &fenceInfo, nullptr, &mInFlightFences[i]);
     }
-    if(failure){
+    if (failure)
+    {
         throw std::runtime_error("Failed to create semaphores!");
     }
-
 }
 
-void VulkanGraphicsApp::cleanupSwapchainDependents(){
+void VulkanGraphicsApp::cleanupSwapchainDependents()
+{
     vkDestroyDescriptorPool(mDeviceBundle.logicalDevice, mUniformDescriptorPool, nullptr);
 
-    for(size_t i = 0; i < IN_FLIGHT_FRAME_LIMIT; ++i){
+    for (size_t i = 0; i < IN_FLIGHT_FRAME_LIMIT; ++i)
+    {
         vkDestroySemaphore(mDeviceBundle.logicalDevice.handle(), mImageAvailableSemaphores[i], nullptr);
         vkDestroySemaphore(mDeviceBundle.logicalDevice.handle(), mRenderFinishSemaphores[i], nullptr);
         vkDestroyFence(mDeviceBundle.logicalDevice.handle(), mInFlightFences[i], nullptr);
     }
 
     vkFreeCommandBuffers(mDeviceBundle.logicalDevice.handle(), mCommandPool, mCommandBuffers.size(), mCommandBuffers.data());
-    
-    for(const VkFramebuffer& fb : mSwapchainFramebuffers){
+
+    for (const VkFramebuffer &fb : mSwapchainFramebuffers)
+    {
         vkDestroyFramebuffer(mDeviceBundle.logicalDevice.handle(), fb, nullptr);
     }
 
@@ -350,8 +416,10 @@ void VulkanGraphicsApp::cleanupSwapchainDependents(){
     mRenderPipeline.destroy();
 }
 
-void VulkanGraphicsApp::cleanup(){
-    for(std::pair<const std::string, VkShaderModule>& module : mShaderModules){
+void VulkanGraphicsApp::cleanup()
+{
+    for (std::pair<const std::string, VkShaderModule> &module : mShaderModules)
+    {
         vkDestroyShaderModule(mDeviceBundle.logicalDevice.handle(), module.second, nullptr);
     }
 
@@ -365,12 +433,17 @@ void VulkanGraphicsApp::cleanup(){
     VulkanSetupBaseApp::cleanup();
 }
 
-void VulkanGraphicsApp::initUniformBuffer() {
-    if(mUniformBuffer.getBoundDataCount() == 0) return;
-    
-    if(!mUniformBuffer.getCurrentDevice().isValid()){
+void VulkanGraphicsApp::initUniformBuffer()
+{
+    if (mUniformBuffer.getBoundDataCount() == 0)
+        return;
+
+    if (!mUniformBuffer.getCurrentDevice().isValid())
+    {
         mUniformBuffer.updateDevice(mDeviceBundle);
-    }else{
+    }
+    else
+    {
         mUniformBuffer.updateDevice();
     }
 
@@ -380,11 +453,12 @@ void VulkanGraphicsApp::initUniformBuffer() {
     initUniformDescriptorPool();
     initUniformDescriptorSets();
 }
-    
-void VulkanGraphicsApp::initUniformDescriptorPool() {
+
+void VulkanGraphicsApp::initUniformDescriptorPool()
+{
     VkDescriptorPoolSize poolSize;
-        poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        poolSize.descriptorCount = mTotalUniformDescriptorSetCount*mUniformBuffer.getBoundDataCount(); // TODO: Check for error
+    poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+    poolSize.descriptorCount = mTotalUniformDescriptorSetCount * mUniformBuffer.getBoundDataCount(); // TODO: Check for error
 
     VkDescriptorPoolCreateInfo createInfo;
     {
@@ -396,15 +470,16 @@ void VulkanGraphicsApp::initUniformDescriptorPool() {
         createInfo.pPoolSizes = &poolSize;
     }
 
-    if(vkCreateDescriptorPool(mDeviceBundle.logicalDevice, &createInfo, nullptr, &mUniformDescriptorPool) != VK_SUCCESS){
+    if (vkCreateDescriptorPool(mDeviceBundle.logicalDevice, &createInfo, nullptr, &mUniformDescriptorPool) != VK_SUCCESS)
+    {
         throw std::runtime_error("Failed to create uniform descriptor pool");
     }
 }
-    
-void VulkanGraphicsApp::initUniformDescriptorSets() {
+
+void VulkanGraphicsApp::initUniformDescriptorSets()
+{
     assert(mTotalUniformDescriptorSetCount != 0);
 
-    
     std::vector<VkDescriptorSetLayout> layouts(mTotalUniformDescriptorSetCount, mUniformBuffer.getDescriptorSetLayout());
 
     VkDescriptorSetAllocateInfo allocInfo;
@@ -415,10 +490,11 @@ void VulkanGraphicsApp::initUniformDescriptorSets() {
         allocInfo.descriptorSetCount = mTotalUniformDescriptorSetCount;
         allocInfo.pSetLayouts = layouts.data();
     }
-    
+
     mUniformDescriptorSets.resize(mTotalUniformDescriptorSetCount, VK_NULL_HANDLE);
     VkResult allocResult = vkAllocateDescriptorSets(mDeviceBundle.logicalDevice, &allocInfo, mUniformDescriptorSets.data());
-    if(allocResult != VK_SUCCESS){
+    if (allocResult != VK_SUCCESS)
+    {
         throw std::runtime_error("Failed to allocate uniform descriptor sets");
     }
 
@@ -428,41 +504,47 @@ void VulkanGraphicsApp::initUniformDescriptorSets() {
     std::vector<VkWriteDescriptorSet> setWriters;
     setWriters.reserve(mUniformDescriptorSets.size() * bindingPoints.size());
 
-    for(VkDescriptorSet descriptorSet : mUniformDescriptorSets){
-        for(size_t i = 0; i < bindingPoints.size(); ++i){
+    for (VkDescriptorSet descriptorSet : mUniformDescriptorSets)
+    {
+        for (size_t i = 0; i < bindingPoints.size(); ++i)
+        {
             setWriters.emplace_back(
                 VkWriteDescriptorSet{
                     /* sType = */ VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-                    /* pNext = */ nullptr, 
+                    /* pNext = */ nullptr,
                     /* dstSet = */ descriptorSet,
                     /* dstBinding = */ bindingPoints[i],
                     /* dstArrayElement = */ 0,
                     /* descriptorCount = */ 1,
-                    /* descriptorType = */ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+                    /* descriptorType = */ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC,
                     /* pImageInfo = */ nullptr,
                     /* pBufferInfo = */ &bufferInfos[i],
-                    /* pTexelBufferView = */ nullptr
-                }
-            );
+                    /* pTexelBufferView = */ nullptr});
         }
     }
     vkUpdateDescriptorSets(mDeviceBundle.logicalDevice, setWriters.size(), setWriters.data(), 0, nullptr);
 }
 
-void VulkanGraphicsApp::initDepthResources(){
+void VulkanGraphicsApp::initDepthResources()
+{
     VkFormat depthFormat = findDepthFormat();
     createImage(mSwapchainBundle.extent.width, mSwapchainBundle.extent.height, depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, depthImage, depthImageMemory);
     depthImageView = createImageView(depthImage, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
 }
 
-VkFormat VulkanGraphicsApp::findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features) {
-    for (VkFormat format : candidates) {
+VkFormat VulkanGraphicsApp::findSupportedFormat(const std::vector<VkFormat> &candidates, VkImageTiling tiling, VkFormatFeatureFlags features)
+{
+    for (VkFormat format : candidates)
+    {
         VkFormatProperties props;
         vkGetPhysicalDeviceFormatProperties(mDeviceBundle.physicalDevice, format, &props);
 
-        if (tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features) {
+        if (tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features)
+        {
             return format;
-        } else if (tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features) {
+        }
+        else if (tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features)
+        {
             return format;
         }
     }
@@ -470,19 +552,21 @@ VkFormat VulkanGraphicsApp::findSupportedFormat(const std::vector<VkFormat>& can
     throw std::runtime_error("failed to find supported format!");
 }
 
-VkFormat VulkanGraphicsApp::findDepthFormat() {
+VkFormat VulkanGraphicsApp::findDepthFormat()
+{
     return findSupportedFormat(
         {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT},
         VK_IMAGE_TILING_OPTIMAL,
-        VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
-    );
+        VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
 }
 
-bool VulkanGraphicsApp::hasStencilComponent(VkFormat format) {
+bool VulkanGraphicsApp::hasStencilComponent(VkFormat format)
+{
     return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
 }
 
-void VulkanGraphicsApp::createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory) {
+void VulkanGraphicsApp::createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage &image, VkDeviceMemory &imageMemory)
+{
     VkImageCreateInfo imageInfo = {};
     imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
     imageInfo.imageType = VK_IMAGE_TYPE_2D;
@@ -498,7 +582,8 @@ void VulkanGraphicsApp::createImage(uint32_t width, uint32_t height, VkFormat fo
     imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
     imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    if (vkCreateImage(mDeviceBundle.logicalDevice, &imageInfo, nullptr, &image) != VK_SUCCESS) {
+    if (vkCreateImage(mDeviceBundle.logicalDevice, &imageInfo, nullptr, &image) != VK_SUCCESS)
+    {
         throw std::runtime_error("failed to create image!");
     }
 
@@ -510,19 +595,23 @@ void VulkanGraphicsApp::createImage(uint32_t width, uint32_t height, VkFormat fo
     allocInfo.allocationSize = memRequirements.size;
     allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
 
-    if (vkAllocateMemory(mDeviceBundle.logicalDevice, &allocInfo, nullptr, &imageMemory) != VK_SUCCESS) {
+    if (vkAllocateMemory(mDeviceBundle.logicalDevice, &allocInfo, nullptr, &imageMemory) != VK_SUCCESS)
+    {
         throw std::runtime_error("failed to allocate image memory!");
     }
 
     vkBindImageMemory(mDeviceBundle.logicalDevice, image, imageMemory, 0);
 }
 
-uint32_t VulkanGraphicsApp::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
+uint32_t VulkanGraphicsApp::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
+{
     VkPhysicalDeviceMemoryProperties memProperties;
     vkGetPhysicalDeviceMemoryProperties(mDeviceBundle.physicalDevice, &memProperties);
 
-    for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
-        if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+    for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++)
+    {
+        if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties)
+        {
             return i;
         }
     }
@@ -530,22 +619,24 @@ uint32_t VulkanGraphicsApp::findMemoryType(uint32_t typeFilter, VkMemoryProperty
     throw std::runtime_error("failed to find suitable memory type!");
 }
 
-VkImageView VulkanGraphicsApp::createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags) {
-        VkImageViewCreateInfo viewInfo = {};
-        viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        viewInfo.image = image;
-        viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-        viewInfo.format = format;
-        viewInfo.subresourceRange.aspectMask = aspectFlags;
-        viewInfo.subresourceRange.baseMipLevel = 0;
-        viewInfo.subresourceRange.levelCount = 1;
-        viewInfo.subresourceRange.baseArrayLayer = 0;
-        viewInfo.subresourceRange.layerCount = 1;
+VkImageView VulkanGraphicsApp::createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags)
+{
+    VkImageViewCreateInfo viewInfo = {};
+    viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    viewInfo.image = image;
+    viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    viewInfo.format = format;
+    viewInfo.subresourceRange.aspectMask = aspectFlags;
+    viewInfo.subresourceRange.baseMipLevel = 0;
+    viewInfo.subresourceRange.levelCount = 1;
+    viewInfo.subresourceRange.baseArrayLayer = 0;
+    viewInfo.subresourceRange.layerCount = 1;
 
-        VkImageView imageView;
-        if (vkCreateImageView(mDeviceBundle.logicalDevice, &viewInfo, nullptr, &imageView) != VK_SUCCESS) {
-            throw std::runtime_error("failed to create texture image view!");
-        }
-
-        return imageView;
+    VkImageView imageView;
+    if (vkCreateImageView(mDeviceBundle.logicalDevice, &viewInfo, nullptr, &imageView) != VK_SUCCESS)
+    {
+        throw std::runtime_error("failed to create texture image view!");
     }
+
+    return imageView;
+}
