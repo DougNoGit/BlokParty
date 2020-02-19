@@ -102,10 +102,10 @@ class UniformBuffer : public DeviceSyncedBuffer
 
  protected:
     virtual void createDescriptorSetLayout();
-    virtual void createUniformBuffer();
+    virtual void createUniformBuffer(const VulkanDeviceBundle& aDeviceBundle);
 
-    virtual void setupDeviceUpload(VulkanDeviceHandlePair aDevicePair) override;
-    virtual void uploadToDevice(VulkanDeviceHandlePair aDevicePair) override;
+    virtual void setupDeviceUpload(VulkanDeviceHandlePair aDevicePair, const VulkanDeviceBundle& aDeviceBundle) override;
+    virtual void uploadToDevice(VulkanDeviceHandlePair aDevicePair, const VulkanDeviceBundle& aDeviceBundle) override;
     virtual void finalizeDeviceUpload(VulkanDeviceHandlePair aDevicePair) override;
 
     struct BoundUniformData{

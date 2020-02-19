@@ -27,8 +27,8 @@ class DeviceSyncedBuffer
 
  protected:
 
-    virtual void setupDeviceUpload(VulkanDeviceHandlePair aDevicePair) = 0;
-    virtual void uploadToDevice(VulkanDeviceHandlePair aDevicePair) = 0;
+    virtual void setupDeviceUpload(VulkanDeviceHandlePair aDevicePair, const VulkanDeviceBundle& aDeviceBundle) = 0;
+    virtual void uploadToDevice(VulkanDeviceHandlePair aDevicePair, const VulkanDeviceBundle& aDeviceBundle) = 0;
     virtual void finalizeDeviceUpload(VulkanDeviceHandlePair aDevicePair) = 0;
 
 };

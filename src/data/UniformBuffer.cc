@@ -1,6 +1,21 @@
 #include "UniformBuffer.h"
 #include <iostream>
 #include <cstring>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
+void* alignedAlloc(size_t size, size_t alignment)
+{
+	void *data = nullptr;
+#if defined(_MSC_VER) || defined(__MINGW32__)
+	data = _aligned_malloc(size, alignment);
+#else 
+	int res = posix_memalign(&data, alignment, size);
+	if (res != 0)
+		data = nullptr;
+#endif
+	return data;
+}
 
 UniformBuffer::UniformBuffer(const VulkanDeviceBundle& aDeviceBundle){
     if(aDeviceBundle.isValid()){
@@ -65,8 +80,8 @@ void UniformBuffer::updateDevice(const VulkanDeviceBundle& aDeviceBundle){
     }
 
     if(mDeviceSyncState == DEVICE_OUT_OF_SYNC || mDeviceSyncState == DEVICE_EMPTY || isBoundDataDirty()){
-        setupDeviceUpload(mCurrentDevice);
-        uploadToDevice(mCurrentDevice);
+        setupDeviceUpload(mCurrentDevice, aDeviceBundle);
+        uploadToDevice(mCurrentDevice, aDeviceBundle);
         finalizeDeviceUpload(mCurrentDevice);
     }
 }
@@ -134,8 +149,16 @@ void UniformBuffer::createDescriptorSetLayout(){
     }
 }
 
-void UniformBuffer::createUniformBuffer(){
+void UniformBuffer::createUniformBuffer(const VulkanDeviceBundle& aDeviceBundle){
     size_t requiredBufferSize = 0;
+    
+    size_t minUboAlignment = aDeviceBundle.physicalDevice.mProperites.limits.minUniformBufferOffsetAlignment;
+	size_t dynamicAlignment = sizeof(glm::mat4);
+	if (minUboAlignment > 0) {
+		dynamicAlignment = (dynamicAlignment + minUboAlignment - 1) & ~(minUboAlignment - 1);
+	}
+    size_t bufferSize = 125 * dynamicAlignment;
+
     for(const std::pair<uint32_t, BoundUniformData>& boundData : mBoundUniformData){
         requiredBufferSize += boundData.second.mDataInterface->getPaddedDataSize(mBufferAlignmentSize);
     }
@@ -147,13 +170,13 @@ void UniformBuffer::createUniformBuffer(){
         );
     }
 
-    if(mDeviceSyncState == DEVICE_EMPTY || requiredBufferSize != mCurrentBufferSize){
+    if(mDeviceSyncState == DEVICE_EMPTY || bufferSize != mCurrentBufferSize){
         VkBufferCreateInfo createInfo;
         {
             createInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
             createInfo.pNext = nullptr;
             createInfo.flags = 0;
-            createInfo.size = requiredBufferSize;
+            createInfo.size = bufferSize;
             createInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
             createInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
             createInfo.queueFamilyIndexCount = 0U;
@@ -163,20 +186,20 @@ void UniformBuffer::createUniformBuffer(){
         if(vkCreateBuffer(mCurrentDevice.device, &createInfo, nullptr, &mUniformBuffer) != VK_SUCCESS){
             throw std::runtime_error("Failed to create uniform buffer!"); 
         }
-        mCurrentBufferSize = requiredBufferSize;
+        mCurrentBufferSize = bufferSize;
     }
 }
 
-void UniformBuffer::setupDeviceUpload(VulkanDeviceHandlePair aDevicePair){
+void UniformBuffer::setupDeviceUpload(VulkanDeviceHandlePair aDevicePair, const VulkanDeviceBundle& aDeviceBundle){
     if(mUniformBuffer == VK_NULL_HANDLE)
-        createUniformBuffer();
+        createUniformBuffer(aDeviceBundle);
 
     if(mLayoutOutOfDate){
         createDescriptorSetLayout();
     }
 }
 
-void UniformBuffer::uploadToDevice(VulkanDeviceHandlePair aDevicePair){
+void UniformBuffer::uploadToDevice(VulkanDeviceHandlePair aDevicePair, const VulkanDeviceBundle& aDeviceBundle){
     if(mDeviceSyncState == DEVICE_EMPTY){
         VkMemoryRequirements memRequirements;
         vkGetBufferMemoryRequirements(aDevicePair.device, mUniformBuffer, &memRequirements);
@@ -222,8 +245,52 @@ void UniformBuffer::uploadToDevice(VulkanDeviceHandlePair aDevicePair){
             uint8_t* start = mappedStart + offset;
             const uint8_t* data = boundData.second.mDataInterface->getData();
             size_t cpySize = boundData.second.mDataInterface->getDataSize();
+            
+            size_t minUboAlignment = aDeviceBundle.physicalDevice.mProperites.limits.minUniformBufferOffsetAlignment;
+            size_t dynamicAlignment = sizeof(glm::mat4);
+            if (minUboAlignment > 0)
+            {
+                dynamicAlignment = (dynamicAlignment + minUboAlignment - 1) & ~(minUboAlignment - 1);
+            }
+            
+            struct UboDataDynamic {
+                glm::mat4 *model = nullptr;
+            } uboDataDynamic;
+            uboDataDynamic.model = (glm::mat4*)alignedAlloc(125 * dynamicAlignment, dynamicAlignment);
+            assert(uboDataDynamic.model);
 
-            memcpy(start, data, cpySize);
+            
+            int dim = 5;
+            glm::vec3 offset(5.0f);
+            /*for (uint32_t x = 0; x < dim; x++)
+            {
+                for (uint32_t y = 0; y < dim; y++)
+                {
+                    for (uint32_t z = 0; z < dim; z++)
+                    {
+                        uint32_t index = x * dim * dim + y * dim + z;
+                        // Aligned offset
+                        glm::mat4* modelMat = (glm::mat4*)(((uint64_t)uboDataDynamic.model + (index * dynamicAlignment)));
+                        // Update matrices
+                        glm::vec3 pos = glm::vec3(-((dim * offset.x) / 2.0f) + offset.x / 2.0f + x * offset.x, -((dim * offset.y) / 2.0f) + offset.y / 2.0f + y * offset.y, -((dim * offset.z) / 2.0f) + offset.z / 2.0f + z * offset.z);
+                        *modelMat = glm::translate(glm::mat4(1), glm::vec3(0, x*0.5, 0));
+                    }
+                }
+            }*/
+
+            for(int i = 0; i < 125; i++) {
+                glm::mat4* modelMat = (glm::mat4*)(((uint64_t)uboDataDynamic.model + (i * dynamicAlignment)));
+                if(i == 0) {
+                    *modelMat = glm::translate(glm::mat4(1), glm::vec3(0.5, 0, 0));
+                }else if(i%2) {
+                    *modelMat = glm::translate(glm::mat4(1), glm::vec3(0, 0.5, 0));
+                } else {
+                    *modelMat = glm::translate(glm::mat4(1), glm::vec3(0, -0.5, 0));
+                }
+                
+            }
+
+            memcpy(start, uboDataDynamic.model, 125 * dynamicAlignment);
 
             offset += boundData.second.mDataInterface->getPaddedDataSize(mBufferAlignmentSize);
             boundData.second.mDataInterface->flagAsClean();
@@ -241,6 +308,13 @@ void UniformBuffer::uploadToDevice(VulkanDeviceHandlePair aDevicePair){
             throw std::runtime_error("Failed to flush mapped memory during uniform buffer upload!");
         }
     }vkUnmapMemory(aDevicePair.device, mUniformBufferMemory); mappedPtr = nullptr;
+}
+
+static glm::mat4 getPerspective(const VkExtent2D& frameDim, float fov, float near, float far){
+    float aspect = (float)frameDim.width / (float)frameDim.height;
+    glm::mat4 perspective = glm::perspective(fov, aspect, near, far);
+    perspective[1][1] = perspective[1][1]*-1;
+    return perspective;
 }
 
 void UniformBuffer::finalizeDeviceUpload(VulkanDeviceHandlePair aDevicePair){

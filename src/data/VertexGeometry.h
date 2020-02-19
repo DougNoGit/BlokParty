@@ -62,8 +62,8 @@ class VertexAttributeBuffer : public DeviceSyncedBuffer
 
  protected:
 
-    virtual void setupDeviceUpload(VulkanDeviceHandlePair aDevicePair) override;
-    virtual void uploadToDevice(VulkanDeviceHandlePair aDevicePair) override;
+    virtual void setupDeviceUpload(VulkanDeviceHandlePair aDevicePair, const VulkanDeviceBundle& aDeviceBundle) override;
+    virtual void uploadToDevice(VulkanDeviceHandlePair aDevicePair, const VulkanDeviceBundle& aDeviceBundle) override;
     virtual void finalizeDeviceUpload(VulkanDeviceHandlePair aDevicePair) override;
 
 
@@ -93,14 +93,14 @@ void VertexAttributeBuffer<VertexType>::updateDevice(const VulkanDeviceBundle& a
         throw std::runtime_error("Attempting to updateDevice() from vertex attribute buffer with no associated device!");
     }
 
-    setupDeviceUpload(mCurrentDevice);
-    uploadToDevice(mCurrentDevice);
+    setupDeviceUpload(mCurrentDevice, aDeviceBundle);
+    uploadToDevice(mCurrentDevice, aDeviceBundle);
     finalizeDeviceUpload(mCurrentDevice);
 }
 
 
 template<typename VertexType>
-void VertexAttributeBuffer<VertexType>::setupDeviceUpload(VulkanDeviceHandlePair aDevicePair){
+void VertexAttributeBuffer<VertexType>::setupDeviceUpload(VulkanDeviceHandlePair aDevicePair, const VulkanDeviceBundle& aDeviceBundle){
     VkDeviceSize requiredSize = sizeof(VertexType) * mCpuVertexData.size();
     
     if(mDeviceSyncState == DEVICE_EMPTY || requiredSize != mCurrentBufferSize){
@@ -124,7 +124,7 @@ void VertexAttributeBuffer<VertexType>::setupDeviceUpload(VulkanDeviceHandlePair
 }
 
 template<typename VertexType>
-void VertexAttributeBuffer<VertexType>::uploadToDevice(VulkanDeviceHandlePair aDevicePair){
+void VertexAttributeBuffer<VertexType>::uploadToDevice(VulkanDeviceHandlePair aDevicePair, const VulkanDeviceBundle& aDeviceBundle){
     VkDeviceSize requiredSize = sizeof(VertexType) * mCpuVertexData.size();
     
     if(mDeviceSyncState == DEVICE_EMPTY || requiredSize != mCurrentBufferSize){

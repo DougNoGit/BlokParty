@@ -19,8 +19,8 @@ using SimpleVertexInput = VertexInputTemplate<SimpleVertex>;
 
 struct Transforms {    
     alignas(16) glm::mat4 Model;
-    alignas(16) glm::mat4 View;    
-    alignas(16) glm::mat4 Projection;
+    //alignas(16) glm::mat4 View;    
+    //alignas(16) glm::mat4 Projection;
 };
 
 struct AnimationInfo {
@@ -29,8 +29,8 @@ struct AnimationInfo {
 
 using UniformTransformData = UniformStructData<Transforms>;
 using UniformTransformDataPtr = std::shared_ptr<UniformTransformData>;
-using UniformAnimationData = UniformStructData<AnimationInfo>;
-using UniformAnimationDataPtr = std::shared_ptr<UniformAnimationData>;
+//using UniformAnimationData = UniformStructData<AnimationInfo>;
+//using UniformAnimationDataPtr = std::shared_ptr<UniformAnimationData>;
 
 static glm::mat4 getOrthographicProjection(const VkExtent2D& frameDim);
 static glm::mat4 getPerspective(const VkExtent2D& frameDim, float fov, float near, float far);
@@ -53,7 +53,7 @@ class Application : public VulkanGraphicsApp
 
     std::shared_ptr<SimpleVertexBuffer> mGeometry = nullptr;
     UniformTransformDataPtr mTransformUniforms = nullptr;
-    UniformAnimationDataPtr mAnimationUniforms = nullptr;
+    //UniformAnimationDataPtr mAnimationUniforms = nullptr;
 };
 
 
@@ -134,7 +134,7 @@ void Application::cleanup(){
     mGeometry = nullptr;
 
     mTransformUniforms = nullptr;
-    mAnimationUniforms = nullptr;
+    //mAnimationUniforms = nullptr;
 
     VulkanGraphicsApp::cleanup();
 }
@@ -155,11 +155,11 @@ void Application::render(){
     angle+=0.01;
     // Set the value of our uniform variable
     mTransformUniforms->pushUniformData({
-        glm::translate(glm::vec3(.1*cos(time), .1*sin(time), -5)) * glm::rotate(time, glm::vec3(0,1,0)),
-        glm::mat4(1),
-        getPerspective(frameDimensions, 120, 0.1, 150)
+        glm::translate(glm::vec3(.1*cos(time), .1*sin(time), -5)) * glm::rotate(time, glm::vec3(0,1,0))
+        //glm::mat4(1),
+        //getPerspective(frameDimensions, 120, 0.1, 150)
     });
-    mAnimationUniforms->pushUniformData({time});
+    //mAnimationUniforms->pushUniformData({time});
 
     // Tell the GPU to render a frame. 
     VulkanGraphicsApp::render();
@@ -206,10 +206,10 @@ void Application::initShaders(){
 
 void Application::initUniforms(){
     mTransformUniforms = UniformTransformData::create();
-    mAnimationUniforms = UniformAnimationData::create(); 
+    //mAnimationUniforms = UniformAnimationData::create(); 
     
     VulkanGraphicsApp::addUniform(0, mTransformUniforms);
-    VulkanGraphicsApp::addUniform(1, mAnimationUniforms);
+    //VulkanGraphicsApp::addUniform(1, mAnimationUniforms);
 }
 
 static glm::mat4 getPerspective(const VkExtent2D& frameDim, float fov, float near, float far){
