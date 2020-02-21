@@ -51,7 +51,6 @@ public:
     InputAdapter keyboardAdapter = InputAdapter();
 
     // temporary (hopefully)
-    GameObject playerGameObject = GameObject();
     PlayerController playerController = PlayerController();
 
 protected:
@@ -112,6 +111,7 @@ void Application::init()
     VulkanGraphicsApp::init();
 
     // Set Keycallbacks (keyboard controls)
+    keyboardData.A = keyboardData.D = keyboardData.S = keyboardData.W = false;
     keyboardAdapter.init(&keyboardData, mWindow);
 }
 
@@ -123,8 +123,8 @@ void Application::run()
 
     float deltaTime = 0;
 
-    playerGameObject = GameObject();
     playerController = PlayerController();
+    playerController.setInputData(&keyboardData);
 
     // Run until the application is closed
     while (!glfwWindowShouldClose(mWindow))
@@ -181,10 +181,11 @@ void Application::render(float deltaTime)
     float time = static_cast<float>(glfwGetTime());
     VkExtent2D frameDimensions = getFramebufferSize();
 
-    glm::mat4 model = playerGameObject.updateGameObject(deltaTime);
+    glm::mat4 model = playerController.update(deltaTime);
+    
     glm::mat4 view = glm::lookAt(glm::vec3(0), glm::vec3(0, 0, -5), glm::vec3(0, 1, 0));
     // Set the value of our uniform variable
-    mTransformUniforms->pushUniformData({glm::translate(glm::vec3(.1 * cos(time), .1 * sin(time), -5)) * glm::rotate(time, glm::vec3(0, 1, 0)),
+    mTransformUniforms->pushUniformData({model * glm::rotate(time, glm::vec3(0, 1, 0)) * glm::rotate(3.14f, glm::vec3(0,0,1)),
                                          view,
                                          getPerspective(frameDimensions, 120, 0.1, 150)});
     mAnimationUniforms->pushUniformData({time});

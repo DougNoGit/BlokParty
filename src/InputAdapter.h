@@ -27,16 +27,16 @@ public:
             glfwSetWindowShouldClose(window, true);
             break;
         case (GLFW_KEY_W):
-            data->W = (action == GLFW_PRESS);
+            data->W = (action != GLFW_RELEASE);
             break;
         case (GLFW_KEY_A):
-            data->A = (action == GLFW_PRESS);
+            data->A = (action != GLFW_RELEASE);
             break;
         case (GLFW_KEY_S):
-            data->S = (action == GLFW_PRESS);
+            data->S = (action != GLFW_RELEASE);
             break;
         case (GLFW_KEY_D):
-            data->D = (action == GLFW_PRESS);
+            data->D = (action != GLFW_RELEASE);
             break;
         }
     }
