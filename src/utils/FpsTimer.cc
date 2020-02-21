@@ -6,10 +6,11 @@
 void FpsTimer::frameStart(){
     mStartTime = std::chrono::high_resolution_clock::now();
 }
-void FpsTimer::frameFinish(){
+int FpsTimer::frameFinish(){
     auto finish = std::chrono::high_resolution_clock::now();
     mTotalTime += finish-mStartTime;
     ++mFrameNumber;
+    return std::chrono::duration_cast<std::chrono::microseconds>(finish - mStartTime).count();
 }
 void FpsTimer::reset(){
     mTotalTime = std::chrono::high_resolution_clock::duration(0);

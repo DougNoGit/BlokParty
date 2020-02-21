@@ -1,11 +1,15 @@
 #include "GameObject.h"
 
-GameObject::update(float deltaTime)
+glm::mat4 GameObject::updateGameObject(float deltaTime)
 {
-
+    return glm::mat4(1);
 }
 
-GameObject::draw() 
+bool GameObject::checkCollided()
 {
+    if(position.y > 5)
+        return true;
+    else
+        return false;
     
 }
