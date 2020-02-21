@@ -11,10 +11,10 @@ glm::mat4 PlayerController::update(float deltaTime)
         playerGameObject.triggerImpulse(glm::vec3(0,-1,0), 10); 
 
     if(data->A)
-        playerGameObject.triggerStrafe(10);
+        playerGameObject.triggerStrafe(-10);
 
     if(data->D)
-        playerGameObject.triggerStrafe(-10);
+        playerGameObject.triggerStrafe(10);
 
     return playerGameObject.updateGameObject(deltaTime);
 }
