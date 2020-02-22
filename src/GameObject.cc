@@ -15,20 +15,18 @@ bool checkCollidedAt(glm::vec3 pos)
         return true;
     else
         return false;
-    
 }
 
 glm::mat4 GameObject::updateGameObject(float deltaTime)
 {
     glm::vec3 newPostition = deltaTime * velocity + position;
-
+    position = newPostition;
     if(checkCollidedAt(newPostition))
     {
         velocity.y = -0.3 * velocity.y;
         position.y = BOTTOM;
     } else {    
         velocity.y += 10 * deltaTime;
-        position = newPostition;
     }
         
     velocity.x += (-velocity.x * deltaTime * 5.0);
