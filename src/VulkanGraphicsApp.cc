@@ -314,12 +314,12 @@ void VulkanGraphicsApp::initCommands()
         // if (mUniformBuffer.getBoundDataCount() > 0)
         // {
         size_t minUboAlignment = mDeviceBundle.physicalDevice.mProperites.limits.minUniformBufferOffsetAlignment;
-        size_t dynamicAlignment = sizeof(glm::mat4);
+        size_t dynamicAlignment = 2*sizeof(glm::mat4);
         if (minUboAlignment > 0)
         {
             dynamicAlignment = (dynamicAlignment + minUboAlignment - 1) & ~(minUboAlignment - 1);
         }
-        for (int j = 0; j < 125; j++)
+        for (int j = 0; j < 63; j++)
         {
 
             uint32_t dynamicOffset = j * static_cast<uint32_t>(dynamicAlignment);
