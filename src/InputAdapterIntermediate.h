@@ -4,7 +4,7 @@
 #include <GLFW/glfw3.h>
 
 typedef struct _inputData {
-    bool W,A,S,D;
+    bool W,A,S,D,I,J,K,L;
 } InputData;
 
 class KeyEventHandler
