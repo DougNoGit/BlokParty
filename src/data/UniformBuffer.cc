@@ -265,25 +265,19 @@ void UniformBuffer::uploadToDevice(VulkanDeviceHandlePair aDevicePair, const Vul
             perspective[1][1] = perspective[1][1]*-1;
 
 
-            for(int i = 0; i < 63; i++) {
-                glm::mat4* modelMat = (glm::mat4*)(((uint64_t)uboDataDynamic.model + (i * dynamicAlignment)));
-                
-                //*modelMat = glm::translate(glm::mat4(1), glm::vec3(3*cos((5*((2*3.14)/126)*i)+frametime), (i-50)*.1+frametime, -5 + 3*sin((5*((2*3.14)/126)*i)+frametime))) * glm::scale(glm::mat4(1),glm::vec3(0.5f,0.5f,0.5f));
-                *modelMat = glm::translate(glm::mat4(1), glm::vec3(3*cos((5*((2*3.14)/126)*i)+frametime/2.0), (i-50)*.1+frametime/2.0, -5 + 3*sin((5*((2*3.14)/126)*i)+frametime/2.0))) * glm::scale(glm::mat4(1),glm::vec3(0.5f,0.5f,0.5f));
-                *(modelMat+1) = perspective;
-                
-            }
-            for(int i = 63; i < 126; i++) {
-                glm::mat4* modelMat = (glm::mat4*)(((uint64_t)uboDataDynamic.model + (i * dynamicAlignment)));
-                if(i%2 == 0) {
-                    *modelMat = glm::translate(glm::mat4(1), glm::vec3(-5+frametime,-96+i+cos(frametime*3),-5));
+            for(int i = 0; i < 2; i++) {
+                glm::mat4* modelMat = (glm::mat4*)(((uint64_t)uboDataDynamic.model + (i * 2 * dynamicAlignment)));
+                if(i==1){
+                    // player 1
+                    *modelMat = glm::translate(glm::mat4(1), glm::vec3(i+cos(frametime),0,-4));
+                    *(modelMat+1) = perspective;
                 } else {
-                    *modelMat = glm::translate(glm::mat4(1), glm::vec3(-1,0,-5));
+                    // player 2
+                    *modelMat = glm::translate(glm::mat4(1), glm::vec3(i-cos(frametime),0,-4));
+                    *(modelMat+1) = perspective;
                 }
-                *(modelMat+1) = perspective;
-                //*modelMat = glm::translate(glm::mat4(1), glm::vec3(3*cos((5*((2*3.14)/126)*i)+frametime), (i-50)*.1+frametime, -5 + 3*sin((5*((2*3.14)/126)*i)+frametime))) * glm::scale(glm::mat4(1),glm::vec3(0.5f,0.5f,0.5f));
+                
             }
-
 
             frametime += .0001;
 

@@ -319,11 +319,11 @@ void VulkanGraphicsApp::initCommands()
         {
             dynamicAlignment = (dynamicAlignment + minUboAlignment - 1) & ~(minUboAlignment - 1);
         }
-        for (int j = 0; j < 63; j++)
+        for (int j = 0; j < 2; j++)
         {
 
             uint32_t dynamicOffset = j * static_cast<uint32_t>(dynamicAlignment);
-            const VkDescriptorSet *descriptorSets = mUniformDescriptorSets.data() + i;
+            const VkDescriptorSet *descriptorSets = mUniformDescriptorSets.data();
             vkCmdBindDescriptorSets(
                 mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mRenderPipeline.getLayout(),
                 0, 1, descriptorSets, 1, &dynamicOffset);

@@ -161,6 +161,10 @@ void Application::render(){
     });
     //mAnimationUniforms->pushUniformData({time});
 
+    // Tell the GPU to render a frame.
+    //glm::mat4 asdf = glm::translate(glm::vec3(1,1,-3));
+    //glm::mat4 fdas = glm::translate(glm::vec3(-1,1,-3));
+
     // Tell the GPU to render a frame. 
     VulkanGraphicsApp::render();
 }
