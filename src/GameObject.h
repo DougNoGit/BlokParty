@@ -13,10 +13,12 @@ private:
     glm::vec3 position;
     glm::vec4 size;   // -x, x, -y, y
     glm::vec4 bounds; // -x, x, -y, y
+    bool isCurrentlyCollided;
 
 public:
     GameObject() 
     {
+        isCurrentlyCollided = false;
         velocity = glm::vec3(0);
         size = glm::vec4(-0.5, 0.5, -0.5, 0.5);
         position = glm::vec3(0,-7,-10);
@@ -26,11 +28,17 @@ public:
                         size.z + position.y, 
                         size.a + position.y);
     }
-    ~GameObject() {}    
-    bool checkCollided();
+    ~GameObject() {}      
+
+    bool isCollided();
+    glm::vec4 getBounds();
+    void setPosition(glm::vec3 pos);
     void triggerStrafe(float magnitude);
+    void triggerImpulse(glm::vec3 combinedVelocityVector);
+    bool checkCollidedAt(glm::vec4 newBounds, GameObject* other);
     void triggerImpulse(glm::vec3 direction, float magnitude);
-    glm::mat4 updateGameObject(float deltaTime, std::vector<GameObject> allObjects);
+    glm::vec4 updateBounds(glm::vec4 oldBounds, glm::vec3 translation);
+    glm::mat4 updateGameObject(float deltaTime, std::vector<GameObject*> allObjects);
 };
 
 

@@ -7,6 +7,10 @@ typedef struct _inputData {
     bool W,A,S,D,I,J,K,L;
 } InputData;
 
+typedef struct _filteredData {
+    bool up,dn,lf,rt;
+} FilteredData;
+
 class KeyEventHandler
 {
 public:
@@ -22,7 +26,8 @@ public:
 	void setEventCallbacks(KeyEventHandler *in_keyEventHandler);
 
 protected:
-    // This class implements the singleton design pattern
+    // This class implements the singleton design pattern. It is also inspired by the way that
+    // Ian Dunn implemented controls in the 471 basecode
 	static InputAdapterIntermediate * instance;
 
 	KeyEventHandler *keyEventHandler = nullptr;

@@ -37,6 +37,18 @@ public:
             break;
         case (GLFW_KEY_D):
             data->D = (action != GLFW_RELEASE);
+            break;        
+        case (GLFW_KEY_I):
+            data->I = (action != GLFW_RELEASE);
+            break;
+        case (GLFW_KEY_J):
+            data->J = (action != GLFW_RELEASE);
+            break;
+        case (GLFW_KEY_K):
+            data->K = (action != GLFW_RELEASE);
+            break;
+        case (GLFW_KEY_L):
+            data->L = (action != GLFW_RELEASE);
             break;
         }
     }

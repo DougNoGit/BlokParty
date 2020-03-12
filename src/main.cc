@@ -40,6 +40,27 @@ using UniformAnimationDataPtr = std::shared_ptr<UniformAnimationData>;
 static glm::mat4 getOrthographicProjection(const VkExtent2D &frameDim);
 static glm::mat4 getPerspective(const VkExtent2D &frameDim, float fov, float near, float far);
 
+void filterControlData(int playerNum, InputData *dataIn, FilteredData *dataOut) 
+{
+    // This is a naive approach to controller mapping. 
+    // If we were supporting more than two players, I would read in the data
+    // as a large array and index into the array by playernum. For now, this 
+    // way works and is more readable. 
+    if(playerNum == 0)
+    {
+        dataOut->up = dataIn->W;
+        dataOut->lf = dataIn->A;
+        dataOut->dn = dataIn->S;
+        dataOut->rt = dataIn->D;
+    } else if(playerNum == 1)
+    {
+        dataOut->up = dataIn->I;
+        dataOut->lf = dataIn->J;
+        dataOut->dn = dataIn->K;
+        dataOut->rt = dataIn->L;
+    }
+}
+
 class Application : public VulkanGraphicsApp
 {
 public:
@@ -49,9 +70,13 @@ public:
 
     InputData keyboardData;
     InputAdapter keyboardAdapter = InputAdapter();
+    FilteredData player0data;
+    FilteredData player1data;
 
-    // temporary (hopefully)
-    PlayerController playerController = PlayerController();
+    std::vector<GameObject*> gameObjects = std::vector<GameObject*>();
+
+    PlayerController playerController0 = PlayerController();
+    PlayerController playerController1 = PlayerController();
 
 protected:
     void initGeometry();
@@ -113,6 +138,14 @@ void Application::init()
     // Set Keycallbacks (keyboard controls)
     keyboardData.A = keyboardData.D = keyboardData.S = keyboardData.W = false;
     keyboardAdapter.init(&keyboardData, mWindow);
+
+    // init game objects
+    gameObjects.push_back(playerController0.getGameObjectPtr());
+    gameObjects.push_back(playerController1.getGameObjectPtr());
+
+    // set starting positions
+    playerController0.getGameObjectPtr()->setPosition(glm::vec3(-3,-7,-10));
+    playerController1.getGameObjectPtr()->setPosition(glm::vec3(3,-7,-10));
 }
 
 void Application::run()
@@ -123,14 +156,16 @@ void Application::run()
 
     float deltaTime = 0;
 
-    playerController = PlayerController();
-    playerController.setInputData(&keyboardData);
+    playerController0.setInputData(&player0data);
+    playerController1.setInputData(&player1data);
 
     // Run until the application is closed
     while (!glfwWindowShouldClose(mWindow))
     {
         // Poll for window events, keyboard and mouse button presses, ect...
         glfwPollEvents();
+        filterControlData(0, &keyboardData, &player0data);
+        filterControlData(1, &keyboardData, &player1data);
 
         // Render the frame
         globalRenderTimer.frameStart();
@@ -181,7 +216,11 @@ void Application::render(float deltaTime)
     float time = static_cast<float>(glfwGetTime());
     VkExtent2D frameDimensions = getFramebufferSize();
 
-    glm::mat4 model = playerController.update(deltaTime);
+    playerController0.update();
+    playerController1.update();
+    glm::mat4 model = gameObjects[0]->updateGameObject(deltaTime, gameObjects);
+
+    gameObjects[1]->updateGameObject(deltaTime, gameObjects);
     
     glm::mat4 view = glm::lookAt(glm::vec3(0), glm::vec3(0, 0, -5), glm::vec3(0, 1, 0));
     // Set the value of our uniform variable

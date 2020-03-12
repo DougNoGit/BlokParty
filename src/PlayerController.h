@@ -8,16 +8,16 @@ class PlayerController
 {
 private:
     GameObject playerGameObject = GameObject();
-    InputData * data = nullptr;
+    FilteredData * data = nullptr;
 public:
     PlayerController(){
         W = A = S = D = false;
     }
     ~PlayerController(){}
-    void setInputData(InputData * _data);
-    glm::mat4 update(float deltaTime);
+    GameObject* getGameObjectPtr();
+    void setInputData(FilteredData * _data);
+    void update();
     bool W,A,S,D;
-
 };
 
 #endif // PLAYER_CONTROLLER_H

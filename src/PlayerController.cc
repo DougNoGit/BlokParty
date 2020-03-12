@@ -1,20 +1,23 @@
 #include "PlayerController.h"
 
-void PlayerController::setInputData(InputData * _data) 
+void PlayerController::setInputData(FilteredData * _data) 
 {
     data = _data;
 }
-    
-glm::mat4 PlayerController::update(float deltaTime)
+
+GameObject * PlayerController::getGameObjectPtr()
 {
-    if(playerGameObject.checkCollided() && data->W)
+    return &playerGameObject;
+}
+    
+void PlayerController::update()
+{
+    if(playerGameObject.isCollided() && data->up)
         playerGameObject.triggerImpulse(glm::vec3(0,-1,0), 10); 
 
-    if(data->A)
-        playerGameObject.triggerStrafe(-10);
+    if(data->lf)
+        playerGameObject.triggerStrafe(-5);
 
-    if(data->D)
-        playerGameObject.triggerStrafe(10);
-
-    return playerGameObject.updateGameObject(deltaTime);
+    if(data->rt)
+        playerGameObject.triggerStrafe(5);
 }
