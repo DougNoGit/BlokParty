@@ -33,6 +33,7 @@ public:
     bool isCollided();
     glm::vec4 getBounds();
     void setPosition(glm::vec3 pos);
+    void triggerJump(float magnitude);
     void triggerStrafe(float magnitude);
     void triggerImpulse(glm::vec3 combinedVelocityVector);
     bool checkCollidedAt(glm::vec4 newBounds, GameObject* other);

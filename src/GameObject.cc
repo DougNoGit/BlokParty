@@ -1,6 +1,9 @@
 #include "GameObject.h"
 
-#define BOTTOM 2.0
+#define BOTTOM 2.0f
+#define BOUNCE_COEFFICIENT 0.3f
+#define GRAVITY 10.0f
+#define FRICTION_COEFFICIENT 2.0f
 
 // TODO better float comparison
 
@@ -54,30 +57,71 @@ glm::vec4 GameObject::updateBounds(glm::vec4 oldBounds, glm::vec3 translation)
 glm::mat4 GameObject::updateGameObject(float deltaTime, std::vector<GameObject*> allObjects)
 {
     isCurrentlyCollided = false;
+    bool collidedX = false;
+    bool collidedY = false;
+
     glm::vec3 nextTranslation = deltaTime * velocity;
+    glm::vec3 nextTranslationX = glm::vec3(nextTranslation.x, 0, 0);
+    glm::vec3 nextTranslationY = glm::vec3(0, nextTranslation.y, 0);
+
     glm::vec3 nextPosition = position + nextTranslation;
+    glm::vec3 nextPositionX = glm::vec3(nextPosition.x, position.y, position.z);
+    glm::vec3 nextPositionY = glm::vec3(position.x, nextPosition.y, position.z);
+
     glm::vec4 nextBounds = updateBounds(bounds, nextTranslation);
+    glm::vec4 nextBoundsX = updateBounds(bounds, nextTranslationX);
+    glm::vec4 nextBoundsY = updateBounds(bounds, nextTranslationY);
 
     // check against other objects
     for(int i = 0; i < allObjects.size(); i++)
     {
         isCurrentlyCollided |= (checkCollidedAt(nextBounds, allObjects[i]) && (this != allObjects[i]));
+        collidedX |= (checkCollidedAt(nextBoundsX, allObjects[i]) && (this != allObjects[i]));
+        collidedY |= (checkCollidedAt(nextBoundsY, allObjects[i]) && (this != allObjects[i]));
     }
 
     // check against the ground 
-    isCurrentlyCollided |= nextPosition.y > BOTTOM;
+    collidedY |= nextPosition.y > BOTTOM;
+    
+    // update collision status if either axis is collided 
+    isCurrentlyCollided |= (collidedY || collidedX);
 
     if(isCurrentlyCollided)
     {
-        // bounce
-        velocity = -0.3f * velocity;
+        if((!collidedY) && (!collidedX))
+        {
+            // break ties by falling instead of strafing,
+            // this case occurs when diagonal movement causes a 
+            // collision
+            position = nextPositionY;
+            bounds = nextBoundsY;
+            velocity.y += GRAVITY * deltaTime;
+            velocity.x *= -1 * BOUNCE_COEFFICIENT;
+        }
+        else if(collidedY && (!collidedX))
+        {
+            position = nextPositionX;
+            bounds = nextBoundsX;
+            velocity.x += (-velocity.x * deltaTime * FRICTION_COEFFICIENT);
+        }
+        else if((!collidedY) && collidedX)
+        {
+            position = nextPositionY;
+            bounds = nextBoundsY;
+            velocity.y += GRAVITY * deltaTime;
+            velocity.x *= -1 * BOUNCE_COEFFICIENT;
+        }
+        else
+        { 
+            return glm::translate(position);
+        }
     } else {            
         position = nextPosition;
         bounds = nextBounds;
-        velocity.y += 10 * deltaTime;
+        velocity.y += GRAVITY * deltaTime;
+        velocity.x += (-velocity.x * deltaTime * FRICTION_COEFFICIENT);
     }
 
-    velocity.x += (-velocity.x * deltaTime * 2.0);
     return glm::translate(position);
 }
 
@@ -94,6 +138,11 @@ void GameObject::triggerImpulse(glm::vec3 combinedVelocityVector)
 void GameObject::triggerStrafe(float magnitude)
 {
     velocity.x = magnitude;
+}
+
+void GameObject::triggerJump(float magnitude)
+{
+    velocity.y = -1 * magnitude;
 }
 
 bool GameObject::isCollided()

@@ -13,11 +13,11 @@ GameObject * PlayerController::getGameObjectPtr()
 void PlayerController::update()
 {
     if(playerGameObject.isCollided() && data->up)
-        playerGameObject.triggerImpulse(glm::vec3(0,-1,0), 10); 
+        playerGameObject.triggerJump(JUMP_STRENGTH); 
 
     if(data->lf)
-        playerGameObject.triggerStrafe(-5);
+        playerGameObject.triggerStrafe(-1 * STRAFE_STRENGTH);
 
     if(data->rt)
-        playerGameObject.triggerStrafe(5);
+        playerGameObject.triggerStrafe(STRAFE_STRENGTH);
 }

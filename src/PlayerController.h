@@ -4,6 +4,9 @@
 #include "InputAdapter.h"
 #include "GameObject.h"
 
+#define JUMP_STRENGTH 10.0f
+#define STRAFE_STRENGTH 5.0f
+
 class PlayerController
 {
 private:
