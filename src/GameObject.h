@@ -4,7 +4,10 @@
 #include <glm/gtx/transform.hpp>
 #include "ModelContainer.h"
 
-#define GRAVITY 10.0
+#define BOTTOM 2.0f
+#define GRAVITY 10.0f
+#define BOUNCE_COEFFICIENT 0.3f
+#define FRICTION_COEFFICIENT 1.0f
 
 class GameObject
 {
@@ -20,7 +23,7 @@ public:
     {
         isCurrentlyCollided = false;
         velocity = glm::vec3(0);
-        size = glm::vec4(-0.5, 0.5, -0.5, 0.5);
+        size = glm::vec4(-1, 1, -1, 1);
         position = glm::vec3(0,-7,-10);
         bounds = glm::vec4(
                         size.x + position.x, 

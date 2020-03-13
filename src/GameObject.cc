@@ -1,10 +1,4 @@
 #include "GameObject.h"
-
-#define BOTTOM 2.0f
-#define BOUNCE_COEFFICIENT 0.3f
-#define GRAVITY 10.0f
-#define FRICTION_COEFFICIENT 2.0f
-
 // TODO better float comparison
 
 void outVec3(glm::vec3 vec)
@@ -103,6 +97,7 @@ glm::mat4 GameObject::updateGameObject(float deltaTime, std::vector<GameObject*>
             position = nextPositionX;
             bounds = nextBoundsX;
             velocity.x += (-velocity.x * deltaTime * FRICTION_COEFFICIENT);
+            velocity.y *= -1 * BOUNCE_COEFFICIENT;
         }
         else if((!collidedY) && collidedX)
         {
@@ -113,6 +108,8 @@ glm::mat4 GameObject::updateGameObject(float deltaTime, std::vector<GameObject*>
         }
         else
         { 
+            velocity.y *= -1 * BOUNCE_COEFFICIENT;
+            velocity.x *= -1 * BOUNCE_COEFFICIENT;
             return glm::translate(position);
         }
     } else {            
