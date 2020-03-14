@@ -71,11 +71,8 @@ class VulkanSetupBaseApp{
     vkutils::VulkanSwapchainBundle mSwapchainBundle;
 
  private:
-
     std::unordered_map<std::string, bool> _mValidationLayers;
     std::unordered_map<std::string, bool> _mExtensions; 
-    
-
 };
 
 #endif

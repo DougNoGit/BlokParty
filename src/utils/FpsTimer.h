@@ -9,7 +9,7 @@ class FpsTimer
     FpsTimer(size_t aTimeBufferSize = 1024U) : mTimeBufferSize(aTimeBufferSize){}
 
     void frameStart();
-    void frameFinish();
+    int frameFinish();
     void reset(); 
 
     bool isBufferFull() const {return(mFrameNumber >= mTimeBufferSize);}
