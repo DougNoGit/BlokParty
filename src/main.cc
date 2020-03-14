@@ -218,13 +218,12 @@ void Application::render(float deltaTime)
 
     playerController0.update();
     playerController1.update();
-    glm::mat4 model = gameObjects[0]->updateGameObject(deltaTime, gameObjects);
-
-    gameObjects[1]->updateGameObject(deltaTime, gameObjects);
+    glm::mat4 model0 = gameObjects[0]->updateGameObject(deltaTime, gameObjects);
+    glm::mat4 model1 = gameObjects[1]->updateGameObject(deltaTime, gameObjects);
     
     glm::mat4 view = glm::lookAt(glm::vec3(0), glm::vec3(0, 0, -5), glm::vec3(0, 1, 0));
     // Set the value of our uniform variable
-    mTransformUniforms->pushUniformData({model * glm::rotate(time, glm::vec3(0, 1, 0)) * glm::rotate(3.14f, glm::vec3(0,0,1)),
+    mTransformUniforms->pushUniformData({model0 * glm::rotate(time, glm::vec3(0, 1, 0)) * glm::rotate(3.14f, glm::vec3(0,0,1)),
                                          view,
                                          getPerspective(frameDimensions, 120, 0.1, 150)});
     mAnimationUniforms->pushUniformData({time});
