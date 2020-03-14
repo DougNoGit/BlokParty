@@ -23,13 +23,8 @@ using SimpleVertexInput = VertexInputTemplate<SimpleVertex>;
 struct Transforms
 {
     alignas(16) glm::mat4 Model;
-<<<<<<< HEAD
     alignas(16) glm::mat4 View;    
     //alignas(16) glm::mat4 Projection;
-=======
-    alignas(16) glm::mat4 View;
-    alignas(16) glm::mat4 Projection;
->>>>>>> collision_detection
 };
 
 struct AnimationInfo
@@ -94,11 +89,7 @@ protected:
 
     std::shared_ptr<SimpleVertexBuffer> mGeometry = nullptr;
     UniformTransformDataPtr mTransformUniforms = nullptr;
-<<<<<<< HEAD
     //UniformAnimationDataPtr mAnimationUniforms = nullptr;
-=======
-    UniformAnimationDataPtr mAnimationUniforms = nullptr;    
->>>>>>> collision_detection
 };
 
 int main(int argc, char **argv)
@@ -229,10 +220,12 @@ void Application::render(float deltaTime)
     playerController1.update();
     glm::mat4 model0 = gameObjects[0]->updateGameObject(deltaTime, gameObjects);
     glm::mat4 model1 = gameObjects[1]->updateGameObject(deltaTime, gameObjects);
+
+    model0 *= glm::rotate(glm::radians(180.0f), glm::vec3(0,0,1));
+    model1 *= glm::rotate(glm::radians(180.0f), glm::vec3(0,0,1));
     
     glm::mat4 view = glm::lookAt(glm::vec3(0), glm::vec3(0, 0, -5), glm::vec3(0, 1, 0));
     // Set the value of our uniform variable
-<<<<<<< HEAD
     mTransformUniforms->pushUniformData({
         glm::translate(glm::vec3(.1*cos(time), .1*sin(time), -5)) * glm::rotate(time, glm::vec3(0,1,0)),
         glm::mat4(1)
@@ -243,15 +236,9 @@ void Application::render(float deltaTime)
     // Tell the GPU to render a frame.
     //glm::mat4 asdf = glm::translate(glm::vec3(1,1,-3));
     //glm::mat4 fdas = glm::translate(glm::vec3(-1,1,-3));
-=======
-    mTransformUniforms->pushUniformData({model0 * glm::rotate(time, glm::vec3(0, 1, 0)) * glm::rotate(3.14f, glm::vec3(0,0,1)),
-                                         view,
-                                         getPerspective(frameDimensions, 120, 0.1, 150)});
-    mAnimationUniforms->pushUniformData({time});
->>>>>>> collision_detection
 
     // Tell the GPU to render a frame.
-    VulkanGraphicsApp::render();
+    VulkanGraphicsApp::render(model0, model1, getPerspective(frameDimensions, 120, 0.1, 150));
 }
 
 void Application::initGeometry()
@@ -294,13 +281,8 @@ void Application::initShaders()
 void Application::initUniforms()
 {
     mTransformUniforms = UniformTransformData::create();
-<<<<<<< HEAD
     //mAnimationUniforms = UniformAnimationData::create(); 
     
-=======
-    mAnimationUniforms = UniformAnimationData::create();
-
->>>>>>> collision_detection
     VulkanGraphicsApp::addUniform(0, mTransformUniforms);
     //VulkanGraphicsApp::addUniform(1, mAnimationUniforms);
 }
@@ -308,13 +290,9 @@ void Application::initUniforms()
 static glm::mat4 getPerspective(const VkExtent2D &frameDim, float fov, float near, float far)
 {
     float aspect = (float)frameDim.width / (float)frameDim.height;
-<<<<<<< HEAD
     glm::mat4 perspective = glm::perspective(fov, aspect, near, far);
-    perspective[1][1] = perspective[1][1]*-1;
+    //perspective[1][1] = perspective[1][1]*-1;
     return perspective;
-=======
-    return (glm::perspective(fov, aspect, near, far));
->>>>>>> collision_detection
 }
 
 static glm::mat4 getOrthographicProjection(const VkExtent2D &frameDim)

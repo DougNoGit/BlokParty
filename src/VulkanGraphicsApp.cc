@@ -107,7 +107,7 @@ void VulkanGraphicsApp::resetRenderSetup()
     sWindowFlags[mWindow].resized = false;
 }
 
-void VulkanGraphicsApp::render()
+void VulkanGraphicsApp::render(glm::mat4 m0, glm::mat4 m1, glm::mat4 p)
 {
     uint32_t targetImageIndex = 0;
     size_t syncObjectIndex = mFrameNumber % IN_FLIGHT_FRAME_LIMIT;
@@ -120,7 +120,7 @@ void VulkanGraphicsApp::render()
     if (result == VK_ERROR_OUT_OF_DATE_KHR || sWindowFlags[mWindow].resized)
     {
         resetRenderSetup();
-        render();
+        render(m0, m1, p);
         return;
     }
     else if (result == VK_SUBOPTIMAL_KHR)
@@ -141,6 +141,9 @@ void VulkanGraphicsApp::render()
 
     vkResetFences(mDeviceBundle.logicalDevice.handle(), 1, &mInFlightFences[syncObjectIndex]);
 
+    mUniformBuffer.setModel0(m0);
+    mUniformBuffer.setModel1(m1);
+    mUniformBuffer.setPerspective(p);
     mUniformBuffer.updateDevice();
 
     if (vkQueueSubmit(mDeviceBundle.logicalDevice.getGraphicsQueue(), 1, &submitInfo, mInFlightFences[syncObjectIndex]) != VK_SUCCESS)

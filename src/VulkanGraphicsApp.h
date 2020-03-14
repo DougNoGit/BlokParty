@@ -16,7 +16,7 @@ class VulkanGraphicsApp : public VulkanSetupBaseApp{
 
  protected:
 
-    void render();
+    void render(glm::mat4 m0, glm::mat4 m1, glm::mat4 p);
 
     void setVertexInput(
        const VkVertexInputBindingDescription& aBindingDescription,

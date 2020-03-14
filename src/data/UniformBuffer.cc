@@ -261,20 +261,19 @@ void UniformBuffer::uploadToDevice(VulkanDeviceHandlePair aDevicePair, const Vul
             assert(uboDataDynamic.model);
 
             
-            glm::mat4 perspective = glm::perspective(90.0, 16.0/9.0, .01, 100.0);
-            perspective[1][1] = perspective[1][1]*-1;
+            glm::mat4 _perspective = perspective;
 
 
             for(int i = 0; i < 2; i++) {
                 glm::mat4* modelMat = (glm::mat4*)(((uint64_t)uboDataDynamic.model + (i * 2 * dynamicAlignment)));
                 if(i==1){
                     // player 1
-                    *modelMat = glm::translate(glm::mat4(1), glm::vec3(i+cos(frametime),0,-4));
-                    *(modelMat+1) = perspective;
+                    *modelMat = model0;
+                    *(modelMat+1) = _perspective;
                 } else {
                     // player 2
-                    *modelMat = glm::translate(glm::mat4(1), glm::vec3(i-cos(frametime),0,-4));
-                    *(modelMat+1) = perspective;
+                    *modelMat = model1;
+                    *(modelMat+1) = _perspective;
                 }
                 
             }
@@ -299,7 +298,7 @@ void UniformBuffer::uploadToDevice(VulkanDeviceHandlePair aDevicePair, const Vul
 static glm::mat4 getPerspective(const VkExtent2D& frameDim, float fov, float near, float far){
     float aspect = (float)frameDim.width / (float)frameDim.height;
     glm::mat4 perspective = glm::perspective(fov, aspect, near, far);
-    perspective[1][1] = perspective[1][1]*-1;
+    //perspective[1][1] = perspective[1][1]*-1;
     return perspective;
 }
 

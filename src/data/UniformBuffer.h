@@ -3,6 +3,8 @@
 
 #include "../utils/common.h"
 #include "DeviceSyncedBuffer.h"
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/transform.hpp>
 #include <vulkan/vulkan.h>
 #include <map>
 #include <memory>
@@ -50,6 +52,7 @@ class UniformStructData : public UniformDataInterface
     virtual const UniformStruct& getStructConst() const {return(mCpuStruct);}
     virtual void setStruct(const UniformStruct& aStruct) {mIsDirty = true; mCpuStruct = aStruct;}
 
+
  protected:
     UniformStructData(){}
 
@@ -76,6 +79,10 @@ class UniformBuffer : public DeviceSyncedBuffer
 {
  public:
     UniformBuffer(){}
+
+    void setModel0(glm::mat4 m) { model0 = m; }
+    void setModel1(glm::mat4 m) { model1 = m; }
+    void setPerspective(glm::mat4 p) { perspective = p; }
     explicit UniformBuffer(const VulkanDeviceBundle& aDeviceBundle);
 
     virtual void bindUniformData(uint32_t aBindPoint, UniformDataInterfacePtr aUniformData, VkShaderStageFlags aStageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
@@ -126,6 +133,7 @@ class UniformBuffer : public DeviceSyncedBuffer
     VkDeviceSize mBufferAlignmentSize = 16U; 
 
  private:
+   glm::mat4 model0, model1, perspective;
     void _cleanup(); 
 
     VkDeviceSize _mCurrentDeviceAllocSize = 0U; 
