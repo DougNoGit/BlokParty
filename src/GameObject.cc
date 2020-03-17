@@ -86,6 +86,8 @@ glm::mat4 GameObject::updateGameObject(float deltaTime, std::vector<GameObject*>
 
     // check against the ground 
     collidedY |= nextPosition.y > BOTTOM;
+    // check against walls 
+    collidedX |= nextPosition.x > LEFT_WALL || nextPosition.x < RIGHT_WALL;
     
     // update collision status if either axis is collided 
     isCurrentlyCollided |= (collidedY || collidedX);

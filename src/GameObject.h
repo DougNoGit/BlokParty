@@ -8,6 +8,9 @@
 #define GRAVITY 10.0f
 #define BOUNCE_COEFFICIENT 0.4f
 #define FRICTION_COEFFICIENT 4.0f
+#define LEFT_WALL 5.0f
+#define RIGHT_WALL -5.0f
+
 
 class GameObject
 {
