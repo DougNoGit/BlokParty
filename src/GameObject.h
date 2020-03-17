@@ -6,8 +6,8 @@
 
 #define BOTTOM 2.0f
 #define GRAVITY 10.0f
-#define BOUNCE_COEFFICIENT 0.3f
-#define FRICTION_COEFFICIENT 1.0f
+#define BOUNCE_COEFFICIENT 0.4f
+#define FRICTION_COEFFICIENT 4.0f
 
 class GameObject
 {

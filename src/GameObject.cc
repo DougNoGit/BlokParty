@@ -69,9 +69,19 @@ glm::mat4 GameObject::updateGameObject(float deltaTime, std::vector<GameObject*>
     // check against other objects
     for(int i = 0; i < allObjects.size(); i++)
     {
-        isCurrentlyCollided |= (checkCollidedAt(nextBounds, allObjects[i]) && (this != allObjects[i]));
-        collidedX |= (checkCollidedAt(nextBoundsX, allObjects[i]) && (this != allObjects[i]));
-        collidedY |= (checkCollidedAt(nextBoundsY, allObjects[i]) && (this != allObjects[i]));
+        bool _collideTotal, _collideX, _collideY;
+        _collideTotal = (checkCollidedAt(nextBounds, allObjects[i]) && (this != allObjects[i]));
+        _collideX = (checkCollidedAt(nextBoundsX, allObjects[i]) && (this != allObjects[i]));
+        _collideY = (checkCollidedAt(nextBoundsY, allObjects[i]) && (this != allObjects[i]));
+
+        isCurrentlyCollided |= _collideTotal;
+        collidedX |= _collideX;
+        collidedY |= _collideY;
+
+        if(_collideY)
+            allObjects[i]->triggerImpulse(glm::vec3(0, velocity.y, 0), BOUNCE_COEFFICIENT);
+        else if(_collideX)
+            allObjects[i]->triggerImpulse(glm::vec3(velocity.x, 0, 0), BOUNCE_COEFFICIENT);        
     }
 
     // check against the ground 
