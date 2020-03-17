@@ -23,7 +23,7 @@ bool GameObject::checkCollidedAt(glm::vec4 newBounds, GameObject* other)
     //               x, y,  z, a
     return ((
                 ((newBounds.y >= otherBounds.x) && (newBounds.y <= otherBounds.y)) ||
-                ((newBounds.x <= otherBounds.y) && (newBounds.x >= otherBounds.y))
+                ((newBounds.x <= otherBounds.y) && (newBounds.y >= otherBounds.y))
             ) &&
             (
                 ((newBounds.z <= otherBounds.a) && (newBounds.z >= otherBounds.z)) || 

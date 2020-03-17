@@ -11,11 +11,11 @@
 // vec4 cyan = vec4(0.0, 0.8, 1.0, 1.0);
 // vec4 lightpos = vec4(5,10,-2,0);
 
-// layout(binding = 0) uniform Transforms {
-//     mat4 Model;    
-//     mat4 View;  
+// layout(binding = 0) uniform UboInstance {
+//     mat4 model;
+//     mat4 view;
 //     //mat4 Projection;
-// } uTransforms;
+// } uboInstance;
 
 // //layout(binding = 1) uniform AnimationInfo{
 // //    float time;
@@ -27,7 +27,7 @@
 //     gl_Position =  uboInstance.view * uboInstance.model * vertPos;
 //     //fragVtxColor = mix(vertCol, vec4(1.0, 1.0, 1.0, 0.0) - vertCol, (sin(uAnimInfo.time*2.5)+1.0) / 2.0);
 //     vec4 lightdir = normalize(vertPos - lightpos);
-//     vec4 fragNor = normalize(uTransforms.View * uTransforms.Model * vec4(vertNor.xyz, 0));
+//     vec4 fragNor = normalize(uboInstance.view * uboInstance.model * vec4(vertNor.xyz, 0));
 //     float diffComp = dot(fragNor, lightdir) + 0.75;
 
 //     float magentaScalar = dot(fragNor, normalize(vertPos - side)) + 1;

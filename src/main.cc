@@ -244,7 +244,7 @@ void Application::render(float deltaTime)
 void Application::initGeometry()
 {
 
-    ModelContainer mc = ModelContainer("../assets/suzanne.gltf");
+    ModelContainer mc = ModelContainer("../assets/bloccy.gltf");
 
     // Create a new vertex buffer on the GPU using the given geometry
     mGeometry = std::make_shared<SimpleVertexBuffer>(mc.verts, mDeviceBundle);
