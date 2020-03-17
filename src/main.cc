@@ -144,7 +144,7 @@ void Application::init()
     gameObjects.push_back(playerController1.getGameObjectPtr());
 
     // set starting positions
-    playerController0.getGameObjectPtr()->setPosition(glm::vec3(-3,-7,-10));
+    playerController0.getGameObjectPtr()->setPosition(glm::vec3(-3,-8,-10.1));
     playerController1.getGameObjectPtr()->setPosition(glm::vec3(3,-7,-10));
 }
 
